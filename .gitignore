@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env
+
+# PostgreSQL
+*.db
+
+# Alembic
+alembic.ini
+
+# Logs
+logs/
+*.log
+
+# VSCode
+.vscode/
+
+# Mac
+.DS_Store
+
+# Node
+node_modules/
+dist/
+
+# Build
+build/
+
+# Docker
+.env.docker
