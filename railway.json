@@ -1,0 +1,14 @@
+{
+  "services": {
+    "backend": {
+      "rootDirectory": "backend",
+      "buildCommand": "pip install -r requirements.txt",
+      "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    },
+    "frontend": {
+      "rootDirectory": "frontend",
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npx serve dist -p $PORT"
+    }
+  }
+}
