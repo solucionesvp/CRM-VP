@@ -7,7 +7,9 @@ import ContactForm from './features/contacts/ContactForm';
 import OpportunityGlobalList from './features/opportunities/OpportunityGlobalList';
 import KanbanBoard from './features/kanban/KanbanBoard';
 import SettingsPage from './features/settings/SettingsPage';
+import TaskList from './features/tasks/TaskList';
 import { fetchContacts, fetchContactById, deleteContact } from './lib/api';
+
 import { Plus } from 'lucide-react';
 
 function App() {
@@ -196,11 +198,18 @@ function App() {
         </div>
       )}
 
+      {currentView === 'tasks' && (
+        <div className="animate-fadeIn">
+          <TaskList />
+        </div>
+      )}
+
       {currentView === 'settings' && (
         <div className="animate-fadeIn">
           <SettingsPage />
         </div>
       )}
+
     </AppLayout>
   );
 }

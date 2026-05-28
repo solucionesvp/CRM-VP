@@ -1,13 +1,14 @@
-import React from 'react';
-import { Users, BarChart2, Columns, Settings, Shield } from 'lucide-react';
+import { Users, BarChart2, Columns, Settings, Shield, CheckSquare } from 'lucide-react';
 
 export default function Sidebar({ currentView, onViewChange }) {
   const menuItems = [
     { id: 'contacts', name: 'Contactos', icon: Users, active: true },
     { id: 'opportunities', name: 'Oportunidades', icon: BarChart2, active: true },
+    { id: 'tasks', name: 'Seguimientos', icon: CheckSquare, active: true },
     { id: 'kanban', name: 'Tablero Kanban', icon: Columns, active: true },
     { id: 'settings', name: 'Configuración', icon: Settings, active: true },
   ];
+
 
   return (
     <aside className="w-64 bg-secondary text-white flex flex-col min-h-screen border-r border-border/10">

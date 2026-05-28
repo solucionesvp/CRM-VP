@@ -39,3 +39,28 @@ class ActivityActionType(str, Enum):
     closed_won = "closed_won"
     closed_lost = "closed_lost"
     other = "other"
+
+
+class TaskType(str, Enum):
+    call = "call"
+    whatsapp = "whatsapp"
+    quote_follow_up = "quote_follow_up"
+    visit = "visit"
+    diagnosis = "diagnosis"
+    payment = "payment"
+    delivery = "delivery"
+    general = "general"
+
+
+class TaskStatus(str, Enum):
+    pending = "pending"
+    completed = "completed"
+    cancelled = "cancelled"
+
+
+class TaskPriority(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    urgent = "urgent"
+

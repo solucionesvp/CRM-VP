@@ -56,6 +56,10 @@ app.include_router(stages_router, prefix="/api/v1", tags=["stages"])
 app.include_router(pipelines_router, prefix="/api/v1", tags=["pipelines"])
 app.include_router(opportunities_router, prefix="/api/v1", tags=["opportunities"])
 
+from app.api.v1 import tasks
+app.include_router(tasks.router, prefix="/api/v1")
+
+
 
 @app.get("/")
 def root():

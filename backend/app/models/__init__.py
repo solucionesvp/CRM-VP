@@ -6,6 +6,7 @@ from app.models.contact import Contact
 from app.models.opportunity import Opportunity
 from app.models.opportunity_note import OpportunityNote
 from app.models.opportunity_activity import OpportunityActivity
+from app.models.task import Task
 
 __all__ = [
     "User",
@@ -15,4 +16,6 @@ __all__ = [
     "Opportunity",
     "OpportunityNote",
     "OpportunityActivity",
+    "Task",
 ]
+
