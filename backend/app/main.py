@@ -62,7 +62,11 @@ app.include_router(tasks.router, prefix="/api/v1")
 from app.api.v1 import dashboard
 app.include_router(dashboard.router, prefix="/api/v1")
 
+from app.api.v1.search import router as search_router
+app.include_router(search_router, prefix="/api/v1")
 
+from app.api.v1.product_services import router as product_services_router
+app.include_router(product_services_router, prefix="/api/v1")
 
 @app.get("/")
 def root():

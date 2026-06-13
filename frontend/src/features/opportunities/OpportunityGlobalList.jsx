@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Filter, TrendingUp, Calendar, ArrowRight, User } from 'lucide-react';
 import { fetchAllOpportunities, fetchPipelines, fetchStages, fetchContacts } from '../../lib/api';
+import OpportunityForm from '../contacts/OpportunityForm';
 
 const PRIORITY_LABELS = {
   low: { label: 'Baja', color: 'bg-blue-50 text-blue-700 border-blue-200' },
@@ -20,6 +21,9 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
   const [selectedPipeline, setSelectedPipeline] = useState('');
   const [selectedStage, setSelectedStage] = useState('');
   const [selectedPriority, setSelectedPriority] = useState('');
+
+  // Form states
+  const [showAddForm, setShowAddForm] = useState(false);
 
   // Loading/Error states
   const [loading, setLoading] = useState(true);
@@ -53,25 +57,26 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
     loadCatalogs();
   }, []);
 
+  const loadOpportunities = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchAllOpportunities({
+        page: 1,
+        size: 100, // Load a large batch to allow hybrid client-side filters
+        pipeline_id: selectedPipeline,
+        stage_id: selectedStage,
+      });
+      setOpportunities(data.items || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fetch opportunities when backend-supported filters change
   useEffect(() => {
-    async function loadOpportunities() {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await fetchAllOpportunities({
-          page: 1,
-          size: 100, // Load a large batch to allow hybrid client-side filters
-          pipeline_id: selectedPipeline,
-          stage_id: selectedStage,
-        });
-        setOpportunities(data.items || []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadOpportunities();
   }, [selectedPipeline, selectedStage]);
 
@@ -84,7 +89,9 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
     const matchesSearch =
       !q ||
       opp.title.toLowerCase().includes(searchLower) ||
-      opp.product_interest.toLowerCase().includes(searchLower) ||
+      (opp.product_interest && opp.product_interest.toLowerCase().includes(searchLower)) ||
+      (opp.product_service?.name?.toLowerCase().includes(searchLower)) ||
+      (opp.product_service?.sku?.toLowerCase().includes(searchLower)) ||
       contactName.toLowerCase().includes(searchLower);
 
     return matchesPriority && matchesSearch;
@@ -100,6 +107,12 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
             Supervisa y gestiona las cotizaciones, reparaciones de taller y ventas activas en Evans Tepic.
           </p>
         </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="bg-primary hover:bg-orange-600 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded transition-colors shadow-sm"
+        >
+          Nueva Oportunidad
+        </button>
       </div>
 
       {/* Filters Bar */}
@@ -122,7 +135,10 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
         <div>
           <select
             value={selectedPipeline}
-            onChange={(e) => setSelectedPipeline(e.target.value)}
+            onChange={(e) => {
+              setSelectedPipeline(e.target.value);
+              setSelectedStage('');
+            }}
             className="w-full px-3 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer"
           >
             <option value="">Todos los Pipelines</option>
@@ -139,14 +155,17 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
           <select
             value={selectedStage}
             onChange={(e) => setSelectedStage(e.target.value)}
-            className="w-full px-3 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer"
+            disabled={!selectedPipeline}
+            className="w-full px-3 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
           >
             <option value="">Todas las Etapas</option>
-            {stages.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
+            {stages
+              .filter((s) => !selectedPipeline || s.pipeline_id.toString() === selectedPipeline.toString())
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
           </select>
         </div>
 
@@ -208,7 +227,9 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
                     <tr key={opp.id} className="hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-4">
                         <div className="font-bold text-text">{opp.title}</div>
-                        <div className="text-xs text-textMuted font-medium">{opp.product_interest}</div>
+                        <div className="text-xs text-textMuted font-medium">
+                          {opp.product_service ? `${opp.product_service.name} ${opp.product_service.sku ? `(${opp.product_service.sku})` : ''}` : opp.product_interest}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <button
@@ -277,6 +298,19 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+      {showAddForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[95vh] overflow-y-auto shadow-xl p-1">
+            <OpportunityForm
+              onSave={() => {
+                setShowAddForm(false);
+                loadOpportunities();
+              }}
+              onCancel={() => setShowAddForm(false)}
+            />
           </div>
         </div>
       )}

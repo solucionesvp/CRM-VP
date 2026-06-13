@@ -59,3 +59,41 @@ class Contact(Base):
     )
 
     opportunities = relationship("Opportunity", back_populates="contact")
+
+    @property
+    def opportunities_count(self) -> int:
+        return len([opp for opp in self.opportunities if opp.deleted_at is None])
+
+    @property
+    def has_open_opportunities(self) -> bool:
+        from app.models.enums import OpportunityStatus
+        return any(opp.status == OpportunityStatus.active for opp in self.opportunities if opp.deleted_at is None)
+
+    @property
+    def primary_interest(self) -> str:
+        from app.models.enums import OpportunityStatus
+        valid_opps = [opp for opp in self.opportunities if opp.deleted_at is None]
+        if not valid_opps:
+            return None
+        active_opps = [opp for opp in valid_opps if opp.status == OpportunityStatus.active]
+        target_opp = None
+        if active_opps:
+            active_opps.sort(key=lambda x: x.created_at, reverse=True)
+            target_opp = active_opps[0]
+        else:
+            valid_opps.sort(key=lambda x: x.created_at, reverse=True)
+            target_opp = valid_opps[0]
+            
+        if target_opp.product_service:
+            return target_opp.product_service.name
+        return target_opp.product_interest
+
+    @property
+    def next_task(self):
+        from app.models.enums import TaskStatus
+        pending_tasks = [t for t in self.tasks if t.status == TaskStatus.pending]
+        if not pending_tasks:
+            return None
+        pending_tasks.sort(key=lambda x: (x.due_date is None, x.due_date))
+        return pending_tasks[0]
+

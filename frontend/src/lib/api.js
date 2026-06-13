@@ -190,3 +190,47 @@ export async function deleteStage(id) {
   });
   return handleResponse(response, 'Error al desactivar la etapa');
 }
+
+// --- Global Search API ---
+export async function fetchGlobalSearch(q) {
+  const params = new URLSearchParams();
+  if (q) params.append('q', q);
+
+  const response = await fetch(`${API_BASE_URL}/search/?${params.toString()}`);
+  return handleResponse(response, 'Error al realizar la búsqueda global');
+}
+
+// --- Product/Services API ---
+export async function fetchProductServices({ active_only = false, search = '' } = {}) {
+  const params = new URLSearchParams();
+  if (active_only) params.append('active_only', 'true');
+  if (search) params.append('search', search);
+
+  const response = await fetch(`${API_BASE_URL}/product-services?${params.toString()}`);
+  return handleResponse(response, 'Error al obtener productos y servicios');
+}
+
+export async function createProductService(data) {
+  const response = await fetch(`${API_BASE_URL}/product-services`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al crear producto o servicio');
+}
+
+export async function updateProductService(id, data) {
+  const response = await fetch(`${API_BASE_URL}/product-services/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al actualizar producto o servicio');
+}
+
+export async function deleteProductService(id) {
+  const response = await fetch(`${API_BASE_URL}/product-services/${id}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response, 'Error al desactivar/eliminar producto o servicio');
+}

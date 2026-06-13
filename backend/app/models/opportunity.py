@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from app.models.opportunity_note import OpportunityNote
     from app.models.opportunity_activity import OpportunityActivity
     from app.models.pipeline import Pipeline
+    from app.models.product_service import ProductService
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
@@ -20,6 +21,7 @@ class Opportunity(Base):
     contact_id = sa.Column(sa.UUID(as_uuid=True), sa.ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
     title = sa.Column(sa.String, nullable=False)
     product_interest = sa.Column(sa.String, nullable=False)
+    product_service_id = sa.Column(sa.UUID(as_uuid=True), sa.ForeignKey("product_services.id", ondelete="SET NULL"), nullable=True)
     stage_id = sa.Column(sa.Integer, sa.ForeignKey("opportunity_stages.id", ondelete="RESTRICT"), nullable=False)
     assigned_to = sa.Column(sa.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     expected_value = sa.Column(sa.Numeric(10, 2), nullable=True)
@@ -61,5 +63,6 @@ class Opportunity(Base):
     contact = relationship("Contact", back_populates="opportunities")
     stage = relationship("OpportunityStage")
     pipeline = relationship("Pipeline")
+    product_service = relationship("ProductService")
     notes = relationship("OpportunityNote", back_populates="opportunity", cascade="all, delete-orphan")
     activities = relationship("OpportunityActivity", back_populates="opportunity", cascade="all, delete-orphan")

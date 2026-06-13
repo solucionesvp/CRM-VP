@@ -83,7 +83,7 @@ export default function OpportunityList({
                   <div>
                     <h4 className="font-bold text-sm text-text mb-1 leading-snug">{opp.title}</h4>
                     <p className="text-xs text-textMuted font-medium mb-3">
-                      Interés: {opp.product_interest}
+                      Interés: {opp.product_service ? `${opp.product_service.name} ${opp.product_service.sku ? `(${opp.product_service.sku})` : ''}` : opp.product_interest}
                     </p>
                   </div>
 

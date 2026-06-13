@@ -1,7 +1,8 @@
 import React from 'react';
 import { Network, HelpCircle, Bell } from 'lucide-react';
+import GlobalSearch from './GlobalSearch';
 
-export default function Header({ currentView }) {
+export default function Header({ currentView, onNavigateToContact }) {
   const getViewTitle = () => {
     switch (currentView) {
       case 'contacts':
@@ -18,7 +19,7 @@ export default function Header({ currentView }) {
   return (
     <header className="h-16 bg-surface border-b border-border px-8 flex items-center justify-between sticky top-0 z-10">
       {/* Title / Context */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 shrink-0">
         <h1 className="text-lg font-bold font-heading text-text tracking-wide m-0">
           {getViewTitle()}
         </h1>
@@ -27,10 +28,16 @@ export default function Header({ currentView }) {
         </span>
       </div>
 
+      {/* Global Search Bar */}
+      <div className="flex-1 max-w-md mx-6">
+        <GlobalSearch onNavigateToContact={onNavigateToContact} />
+      </div>
+
       {/* Action / Status Utilities */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 shrink-0">
         {/* Connection Health Indicator */}
         <div className="flex items-center gap-2 text-xs text-textMuted bg-gray-100 px-3 py-1.5 rounded border border-border">
+
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           <span className="font-semibold text-[11px] tracking-wide">CONECTADO AL BACKEND</span>
         </div>

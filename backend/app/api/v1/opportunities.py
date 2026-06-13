@@ -59,7 +59,13 @@ router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 
 @router.post("/", response_model=OpportunityResponse, status_code=status.HTTP_201_CREATED)
 def create_opportunity(data: OpportunityCreate, db: Session = Depends(get_db)):
-    return opportunity_service.create_opportunity(db, data)
+    try:
+        return opportunity_service.create_opportunity(db, data)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.get("/", response_model=OpportunityListResponse, status_code=status.HTTP_200_OK)
@@ -99,30 +105,42 @@ def get_opportunity(opportunity_id: UUID, db: Session = Depends(get_db)):
 
 @router.patch("/{opportunity_id}", response_model=OpportunityResponse, status_code=status.HTTP_200_OK)
 def update_opportunity(opportunity_id: UUID, data: OpportunityUpdate, db: Session = Depends(get_db)):
-    opp = opportunity_service.update_opportunity(db, opportunity_id, data)
-    if not opp:
+    try:
+        opp = opportunity_service.update_opportunity(db, opportunity_id, data)
+        if not opp:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Oportunidad no encontrada",
+            )
+        return opp
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Oportunidad no encontrada",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
-    return opp
 
 
 @router.patch("/{opportunity_id}/stage", response_model=OpportunityResponse, status_code=status.HTTP_200_OK)
 def change_stage(opportunity_id: UUID, data: OpportunityStageChange, db: Session = Depends(get_db)):
-    opp = opportunity_service.change_stage(
-        db,
-        opp_id=opportunity_id,
-        new_stage_id=data.stage_id,
-        user_id=None,
-        description=data.description,
-    )
-    if not opp:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Oportunidad o etapa no encontrada",
+    try:
+        opp = opportunity_service.change_stage(
+            db,
+            opp_id=opportunity_id,
+            new_stage_id=data.stage_id,
+            user_id=None,
+            description=data.description,
         )
-    return opp
+        if not opp:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Oportunidad o etapa no encontrada",
+            )
+        return opp
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 @router.post("/{opportunity_id}/notes", response_model=NoteResponse, status_code=status.HTTP_201_CREATED)

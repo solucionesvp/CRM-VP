@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
-from app.models.enums import ContactType, ContactSource
+from app.models.enums import ContactType, ContactSource, TaskType
 
 class ContactBase(BaseModel):
     type: ContactType
@@ -35,6 +35,14 @@ class ContactUpdate(BaseModel):
     notes: Optional[str] = None
     assigned_to: Optional[UUID] = None
 
+class ContactNextTaskSchema(BaseModel):
+    id: int
+    title: str
+    task_type: TaskType
+    due_date: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
 class ContactResponse(ContactBase):
     id: UUID
     is_active: bool
@@ -42,8 +50,14 @@ class ContactResponse(ContactBase):
     created_by: Optional[UUID]
     created_at: datetime
     updated_at: datetime
+    
+    opportunities_count: int = 0
+    has_open_opportunities: bool = False
+    primary_interest: Optional[str] = None
+    next_task: Optional[ContactNextTaskSchema] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ContactListResponse(BaseModel):
     items: List[ContactResponse]

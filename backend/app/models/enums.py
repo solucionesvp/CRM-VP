@@ -64,3 +64,12 @@ class TaskPriority(str, Enum):
     high = "high"
     urgent = "urgent"
 
+class ProductServiceType(str, Enum):
+    product = "product"
+    service = "service"
+
+class ProductServiceArea(str, Enum):
+    residential = "residential"
+    commercial = "commercial"
+    industrial = "industrial"
+    other = "other"

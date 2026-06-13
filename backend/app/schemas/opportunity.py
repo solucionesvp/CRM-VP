@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict
 
 from app.models.enums import OpportunityPriority, OpportunityStatus, ActivityActionType
 from app.schemas.stage import StageResponse
+from app.schemas.product_service import ProductServiceResponse
 
 
 class PipelineCreate(BaseModel):
@@ -39,6 +40,7 @@ class OpportunityBase(BaseModel):
     contact_id: UUID
     title: str
     product_interest: str
+    product_service_id: Optional[UUID] = None
     stage_id: int
     pipeline_id: int
     assigned_to: Optional[UUID] = None
@@ -85,6 +87,7 @@ class OpportunityResponse(OpportunityBase):
     lost_reason: Optional[str] = None
     stage: StageResponse
     pipeline: Optional[PipelineResponse] = None
+    product_service: Optional[ProductServiceResponse] = None
     created_by: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime

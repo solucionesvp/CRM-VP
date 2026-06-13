@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate
@@ -28,7 +28,15 @@ def list_contacts(
     q: Optional[str] = None,
     assigned_to: Optional[UUID] = None,
 ) -> tuple[list[Contact], int]:
-    query = db.query(Contact).filter(Contact.deleted_at.is_(None))
+    query = (
+        db.query(Contact)
+        .options(
+            selectinload(Contact.opportunities),
+            selectinload(Contact.tasks),
+        )
+        .filter(Contact.deleted_at.is_(None))
+    )
+
 
     if q:
         pattern = f"%{q}%"

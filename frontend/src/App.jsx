@@ -136,7 +136,8 @@ function App() {
   };
 
   return (
-    <AppLayout currentView={currentView} onViewChange={setCurrentView}>
+    <AppLayout currentView={currentView} onViewChange={setCurrentView} onNavigateToContact={handleNavigateToContact}>
+
       {currentView === 'dashboard' && (
         <div className="animate-fadeIn">
           <Dashboard onNavigateToContact={handleNavigateToContact} onNavigateToOpportunity={() => {}} />

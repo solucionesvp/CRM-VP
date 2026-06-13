@@ -317,11 +317,16 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
                       className="flex-1 bg-white border border-border rounded px-2 py-1 cursor-pointer focus:outline-none"
                     >
                       <option value="" disabled>Selecciona etapa...</option>
-                      {stages.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
+                      {(() => {
+                        const activeOpp = opps.find(o => o.id === activeStagePickerOppId);
+                        return stages
+                          .filter((s) => activeOpp && s.pipeline_id === activeOpp.pipeline_id)
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ));
+                      })()}
                     </select>
                     <button
                       onClick={() => setActiveStagePickerOppId(null)}

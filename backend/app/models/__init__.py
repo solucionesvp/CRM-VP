@@ -7,6 +7,7 @@ from app.models.opportunity import Opportunity
 from app.models.opportunity_note import OpportunityNote
 from app.models.opportunity_activity import OpportunityActivity
 from app.models.task import Task
+from app.models.product_service import ProductService
 
 __all__ = [
     "User",
@@ -17,5 +18,5 @@ __all__ = [
     "OpportunityNote",
     "OpportunityActivity",
     "Task",
+    "ProductService",
 ]
-

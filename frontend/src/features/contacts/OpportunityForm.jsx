@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Phone, MessageSquare, FileText, MapPin, Activity, CreditCard, Truck, CheckSquare, CheckCircle, Trash2 } from 'lucide-react';
-import { fetchPipelines, fetchStages, createOpportunity } from '../../lib/api';
+import { fetchPipelines, fetchStages, createOpportunity, fetchProductServices, fetchContacts } from '../../lib/api';
 import TaskForm from '../tasks/TaskForm';
 import OpportunityActivityFeed from '../opportunities/OpportunityActivityFeed';
 
@@ -31,19 +31,23 @@ const TYPE_STYLES = {
   general: { label: 'General', icon: CheckSquare, color: 'text-gray-500' },
 };
 
-export default function OpportunityForm({ contactId, opportunity = null, onSave, onCancel }) {
+export default function OpportunityForm({ contactId: initialContactId, opportunity = null, onSave, onCancel }) {
   // Fields
   const [title, setTitle] = useState('');
   const [productInterest, setProductInterest] = useState('');
+  const [productServiceId, setProductServiceId] = useState('');
   const [pipelineId, setPipelineId] = useState('');
   const [stageId, setStageId] = useState('');
   const [expectedValue, setExpectedValue] = useState('');
   const [priority, setPriority] = useState('medium');
   const [expectedCloseDate, setExpectedCloseDate] = useState('');
+  const [contactId, setContactId] = useState(initialContactId || '');
 
   // Dropdown options loaded from backend
   const [pipelines, setPipelines] = useState([]);
   const [stages, setStages] = useState([]);
+  const [productServices, setProductServices] = useState([]);
+  const [contacts, setContacts] = useState([]);
 
   // Tasks States
   const [tasks, setTasks] = useState([]);
@@ -54,6 +58,7 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
 
   // States
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
@@ -78,20 +83,26 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
   useEffect(() => {
     async function loadOptions() {
       try {
-        const [pipelinesData, stagesData] = await Promise.all([
+        const [pipelinesData, stagesData, productsData] = await Promise.all([
           fetchPipelines(),
           fetchStages(),
+          fetchProductServices({ active_only: true })
         ]);
         setPipelines(pipelinesData);
         setStages(stagesData);
+        setProductServices(productsData);
 
         // Preselect first pipeline/stage on create mode
         if (!opportunity) {
           if (pipelinesData.length > 0) {
-            setPipelineId(pipelinesData[0].id.toString());
-          }
-          if (stagesData.length > 0) {
-            setStageId(stagesData[0].id.toString());
+            const firstPipelineId = pipelinesData[0].id.toString();
+            setPipelineId(firstPipelineId);
+            const firstPipelineStages = stagesData.filter(s => s.pipeline_id.toString() === firstPipelineId);
+            if (firstPipelineStages.length > 0) {
+              setStageId(firstPipelineStages[0].id.toString());
+            } else {
+              setStageId('');
+            }
           }
         }
       } catch (err) {
@@ -103,26 +114,48 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
     loadOptions();
   }, [opportunity]);
 
+  // Load contacts if this is a global creation
+  useEffect(() => {
+    async function loadContacts() {
+      if (!initialContactId) {
+        setLoadingContacts(true);
+        try {
+          const data = await fetchContacts({ size: 100 });
+          setContacts(data.items || data || []);
+        } catch (err) {
+          console.error("Error al cargar contactos:", err);
+        } finally {
+          setLoadingContacts(false);
+        }
+      }
+    }
+    loadContacts();
+  }, [initialContactId]);
+
   // Load opportunity values if in edit mode
   useEffect(() => {
     if (opportunity) {
       setTitle(opportunity.title || '');
       setProductInterest(opportunity.product_interest || '');
+      setProductServiceId(opportunity.product_service_id || '');
       setPipelineId(opportunity.pipeline_id?.toString() || '');
       setStageId(opportunity.stage_id?.toString() || '');
       setExpectedValue(opportunity.expected_value?.toString() || '');
       setPriority(opportunity.priority || 'medium');
       setExpectedCloseDate(opportunity.expected_close_date ? opportunity.expected_close_date.split('T')[0] : '');
+      setContactId(opportunity.contact_id || initialContactId || '');
       loadTasks();
     } else {
       setTitle('');
       setProductInterest('');
+      setProductServiceId('');
       setExpectedValue('');
       setPriority('medium');
       setExpectedCloseDate('');
+      setContactId(initialContactId || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [opportunity]);
+  }, [opportunity, initialContactId]);
 
   const handleCompleteTask = async (taskId) => {
     try {
@@ -149,6 +182,20 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
     }
   };
 
+  const handlePipelineChange = (newPipelineId) => {
+    setPipelineId(newPipelineId);
+    if (!newPipelineId) {
+      setStageId('');
+      return;
+    }
+    const pipelineStages = stages.filter(s => s.pipeline_id.toString() === newPipelineId.toString());
+    if (pipelineStages.length > 0) {
+      setStageId(pipelineStages[0].id.toString());
+    } else {
+      setStageId('');
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
     if (!title.trim()) {
@@ -162,6 +209,9 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
     }
     if (!stageId) {
       newErrors.stage_id = 'Debes seleccionar una etapa inicial';
+    }
+    if (!contactId) {
+      newErrors.contact_id = 'Debes seleccionar un contacto relacionado';
     }
     if (expectedValue && isNaN(Number(expectedValue))) {
       newErrors.expected_value = 'El valor estimado debe ser un número válido';
@@ -181,6 +231,7 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
       contact_id: contactId,
       title: title.trim(),
       product_interest: productInterest.trim(),
+      product_service_id: productServiceId ? productServiceId : null,
       pipeline_id: parseInt(pipelineId),
       stage_id: parseInt(stageId),
       expected_value: expectedValue.trim() ? parseFloat(expectedValue) : null,
@@ -249,6 +300,37 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
+        {/* Contact Selector (only when initialContactId is not provided) */}
+        {!initialContactId && (
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1">
+              Contacto Relacionado *
+            </label>
+            {loadingContacts ? (
+              <p className="text-[10px] text-textMuted">Cargando contactos...</p>
+            ) : (
+              <select
+                value={contactId}
+                required
+                onChange={(e) => setContactId(e.target.value)}
+                className={`w-full px-2 py-2 bg-background border rounded text-text font-medium focus:outline-none focus:ring-1 transition-all ${
+                  errors.contact_id
+                    ? 'border-red-500 focus:ring-red-500/20'
+                    : 'border-border focus:border-primary focus:ring-primary/20'
+                }`}
+              >
+                <option value="">-- Seleccionar Contacto --</option>
+                {contacts.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ''}
+                  </option>
+                ))}
+              </select>
+            )}
+            {errors.contact_id && <p className="text-[10px] text-red-500 mt-1">{errors.contact_id}</p>}
+          </div>
+        )}
+
         {/* Title */}
         <div>
           <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1">
@@ -268,25 +350,48 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
           {errors.title && <p className="text-[10px] text-red-500 mt-1">{errors.title}</p>}
         </div>
 
-        {/* Product Interest */}
-        <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1">
-            Equipo / Producto de Interés *
-          </label>
-          <input
-            type="text"
-            value={productInterest}
-            onChange={(e) => setProductInterest(e.target.value)}
-            placeholder="Ej. Bomba Autocebante 3 HP Evans"
-            className={`w-full px-3 py-2 bg-background border rounded text-text focus:outline-none focus:ring-1 transition-all ${
-              errors.product_interest
-                ? 'border-red-500 focus:ring-red-500/20'
-                : 'border-border focus:border-primary focus:ring-primary/20'
-            }`}
-          />
-          {errors.product_interest && (
-            <p className="text-[10px] text-red-500 mt-1">{errors.product_interest}</p>
-          )}
+        {/* Product / Catalog */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1">
+              Catálogo Comercial (Opcional)
+            </label>
+            <select
+              value={productServiceId}
+              onChange={(e) => {
+                setProductServiceId(e.target.value);
+                const selected = productServices.find(p => p.id === e.target.value);
+                if (selected && !productInterest) {
+                  setProductInterest(selected.name);
+                }
+              }}
+              className="w-full px-2 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer"
+            >
+              <option value="">-- Seleccionar --</option>
+              {productServices.map(ps => (
+                <option key={ps.id} value={ps.id}>{ps.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-textMuted mb-1">
+              Detalle / Equipo de Interés *
+            </label>
+            <input
+              type="text"
+              value={productInterest}
+              onChange={(e) => setProductInterest(e.target.value)}
+              placeholder="Ej. Bomba Autocebante 3 HP Evans"
+              className={`w-full px-3 py-2 bg-background border rounded text-text focus:outline-none focus:ring-1 transition-all ${
+                errors.product_interest
+                  ? 'border-red-500 focus:ring-red-500/20'
+                  : 'border-border focus:border-primary focus:ring-primary/20'
+              }`}
+            />
+            {errors.product_interest && (
+              <p className="text-[10px] text-red-500 mt-1">{errors.product_interest}</p>
+            )}
+          </div>
         </div>
 
         {/* Pipeline & Stage Row */}
@@ -297,9 +402,10 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
             </label>
             <select
               value={pipelineId}
-              onChange={(e) => setPipelineId(e.target.value)}
+              onChange={(e) => handlePipelineChange(e.target.value)}
               className="w-full px-2 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer"
             >
+              <option value="" disabled>-- Seleccionar --</option>
               {pipelines.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name}
@@ -314,13 +420,19 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
             <select
               value={stageId}
               onChange={(e) => setStageId(e.target.value)}
-              className="w-full px-2 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer"
+              disabled={!pipelineId}
+              className="w-full px-2 py-2 bg-background border border-border rounded text-text font-medium focus:outline-none focus:border-primary cursor-pointer disabled:opacity-50"
             >
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
+              {stages.filter(s => s.pipeline_id.toString() === pipelineId.toString()).length === 0 && (
+                <option value="">-- Sin etapas --</option>
+              )}
+              {stages
+                .filter(s => s.pipeline_id.toString() === pipelineId.toString())
+                .map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
             </select>
           </div>
         </div>

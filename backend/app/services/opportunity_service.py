@@ -24,6 +24,7 @@ def _base_query(db: Session):
         .options(
             joinedload(Opportunity.stage),
             joinedload(Opportunity.pipeline),
+            joinedload(Opportunity.product_service),
         )
         .filter(Opportunity.deleted_at.is_(None))
     )
@@ -70,6 +71,10 @@ def create_opportunity(db: Session, data: OpportunityCreate) -> Opportunity:
     if not pipeline:
         raise ValueError(f"pipeline_id {data.pipeline_id} no existe")
 
+    # Validate stage belongs to pipeline
+    if stage.pipeline_id != pipeline.id:
+        raise ValueError(f"La etapa (stage_id: {data.stage_id}) no pertenece al pipeline (pipeline_id: {data.pipeline_id})")
+
     opp = Opportunity(**data.model_dump())
     db.add(opp)
     db.flush()
@@ -98,9 +103,17 @@ def update_opportunity(
     updates.pop("status", None)
     # Validate new pipeline_id if provided
     if "pipeline_id" in updates:
-        pipeline = db.query(Pipeline).filter(Pipeline.id == updates["pipeline_id"]).first()
+        new_pipeline_id = updates["pipeline_id"]
+        pipeline = db.query(Pipeline).filter(Pipeline.id == new_pipeline_id).first()
         if not pipeline:
-            raise ValueError(f"pipeline_id {updates['pipeline_id']} no existe")
+            raise ValueError(f"pipeline_id {new_pipeline_id} no existe")
+        
+        # Check if the current stage of the opportunity belongs to the new pipeline
+        if opp.stage.pipeline_id != new_pipeline_id:
+            raise ValueError(
+                f"No se puede cambiar al pipeline {new_pipeline_id} porque la etapa actual de la "
+                f"oportunidad ({opp.stage_id}) no pertenece a este pipeline. Cambie la etapa primero."
+            )
     for field, value in updates.items():
         setattr(opp, field, value)
     opp.updated_at = _utcnow()
@@ -122,6 +135,11 @@ def change_stage(
     stage = db.query(OpportunityStage).filter(OpportunityStage.id == new_stage_id).first()
     if not stage:
         return None
+    # Validate stage belongs to the opportunity's pipeline
+    if stage.pipeline_id != opp.pipeline_id:
+        raise ValueError(
+            f"La etapa {new_stage_id} no pertenece al pipeline {opp.pipeline_id} de la oportunidad"
+        )
     try:
         from_stage_id = opp.stage_id
         opp.stage_id = new_stage_id
