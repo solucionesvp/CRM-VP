@@ -8,6 +8,8 @@ from app.models.opportunity_note import OpportunityNote
 from app.models.opportunity_activity import OpportunityActivity
 from app.models.task import Task
 from app.models.product_service import ProductService
+from app.models.quick_reply import QuickReply
+from app.models.stage_rule import StageRule
 
 __all__ = [
     "User",
@@ -19,4 +21,6 @@ __all__ = [
     "OpportunityActivity",
     "Task",
     "ProductService",
+    "QuickReply",
+    "StageRule",
 ]

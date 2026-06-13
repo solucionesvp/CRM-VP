@@ -4,6 +4,7 @@ import { fetchPipelines } from '../../lib/api';
 import PipelineManager from './PipelineManager';
 import StageManager from './StageManager';
 import ProductServiceManager from './ProductServiceManager';
+import CommercialEngine from './CommercialEngine';
 
 export default function SettingsPage() {
   const [pipelines, setPipelines] = useState([]);
@@ -66,6 +67,14 @@ export default function SettingsPage() {
         >
           Catálogo Comercial
         </button>
+        <button
+          onClick={() => setActiveTab('commercial_engine')}
+          className={`py-2 px-4 font-semibold text-sm focus:outline-none ${
+            activeTab === 'commercial_engine' ? 'border-b-2 border-primary text-primary' : 'text-textMuted hover:text-text'
+          }`}
+        >
+          Motor Comercial
+        </button>
       </div>
 
       {activeTab === 'pipelines' && (
@@ -102,6 +111,12 @@ export default function SettingsPage() {
       {activeTab === 'catalog' && (
         <div className="animate-fadeIn bg-white p-6 rounded-lg shadow-sm border border-border">
           <ProductServiceManager />
+        </div>
+      )}
+
+      {activeTab === 'commercial_engine' && (
+        <div className="animate-fadeIn bg-white p-6 rounded-lg shadow-sm border border-border">
+          <CommercialEngine />
         </div>
       )}
     </div>

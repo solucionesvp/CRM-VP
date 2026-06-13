@@ -73,3 +73,19 @@ class ProductServiceArea(str, Enum):
     commercial = "commercial"
     industrial = "industrial"
     other = "other"
+
+class QuickReplyCategory(str, Enum):
+    primer_contacto = "primer_contacto"
+    seguimiento = "seguimiento"
+    cotizacion = "cotizacion"
+    diagnostico = "diagnostico"
+    entrega = "entrega"
+    general = "general"
+
+class RuleTriggerEvent(str, Enum):
+    on_enter = "on_enter"
+
+class RuleActionType(str, Enum):
+    create_task = "create_task"
+    suggest_reply = "suggest_reply"
+    notify = "notify"
