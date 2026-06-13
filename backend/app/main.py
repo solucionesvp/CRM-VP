@@ -59,6 +59,9 @@ app.include_router(opportunities_router, prefix="/api/v1", tags=["opportunities"
 from app.api.v1 import tasks
 app.include_router(tasks.router, prefix="/api/v1")
 
+from app.api.v1 import dashboard
+app.include_router(dashboard.router, prefix="/api/v1")
+
 
 
 @app.get("/")

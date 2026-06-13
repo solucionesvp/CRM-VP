@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect } from 'react';
 import AppLayout from './components/layout/AppLayout';
 import ContactFilters from './features/contacts/ContactFilters';
 import ContactList from './features/contacts/ContactList';
@@ -8,12 +9,13 @@ import OpportunityGlobalList from './features/opportunities/OpportunityGlobalLis
 import KanbanBoard from './features/kanban/KanbanBoard';
 import SettingsPage from './features/settings/SettingsPage';
 import TaskList from './features/tasks/TaskList';
+import Dashboard from './features/dashboard/Dashboard';
 import { fetchContacts, fetchContactById, deleteContact } from './lib/api';
 
 import { Plus } from 'lucide-react';
 
 function App() {
-  const [currentView, setCurrentView] = useState('contacts');
+  const [currentView, setCurrentView] = useState('dashboard');
 
   // Contacts states
   const [contacts, setContacts] = useState([]);
@@ -135,6 +137,12 @@ function App() {
 
   return (
     <AppLayout currentView={currentView} onViewChange={setCurrentView}>
+      {currentView === 'dashboard' && (
+        <div className="animate-fadeIn">
+          <Dashboard onNavigateToContact={handleNavigateToContact} onNavigateToOpportunity={() => {}} />
+        </div>
+      )}
+
       {currentView === 'contacts' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start animate-fadeIn">
           {/* List and Filters section */}

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, Phone, MessageSquare, FileText, MapPin, Activity, CreditCard, Truck, CheckSquare, CheckCircle, Trash2 } from 'lucide-react';
 import { fetchPipelines, fetchStages, createOpportunity } from '../../lib/api';
 import TaskForm from '../tasks/TaskForm';
+import OpportunityActivityFeed from '../opportunities/OpportunityActivityFeed';
 
 const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1`;
 
@@ -460,6 +461,16 @@ export default function OpportunityForm({ contactId, opportunity = null, onSave,
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Historial de Actividad Section */}
+        {opportunity?.id && (
+          <div className="border-t border-border pt-4 mt-4 space-y-3">
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-textMuted">
+              Historial de Actividad
+            </h4>
+            <OpportunityActivityFeed opportunityId={opportunity.id} />
           </div>
         )}
 
