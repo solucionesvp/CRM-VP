@@ -14,6 +14,7 @@ export default function OpportunityList({
   onAddClick,
   onDeleteClick,
   onStageChangeClick,
+  isCompact = false,
 }) {
   if (loading) {
     return (
@@ -33,19 +34,21 @@ export default function OpportunityList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header and Add Button */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-textMuted">
-          Oportunidades Comerciales
-        </h3>
-        <button
-          onClick={onAddClick}
-          className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 uppercase tracking-wider transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> Nueva Oportunidad
-        </button>
-      </div>
+      {!isCompact && (
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold uppercase tracking-widest text-textMuted">
+            Oportunidades Comerciales
+          </h3>
+          <button
+            onClick={onAddClick}
+            className="flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 uppercase tracking-wider transition-colors"
+          >
+            <Plus className="w-3.5 h-3.5" /> Nueva Oportunidad
+          </button>
+        </div>
+      )}
 
       {/* Empty State */}
       {(!opportunities || opportunities.length === 0) ? (
@@ -63,10 +66,86 @@ export default function OpportunityList({
         </div>
       ) : (
         /* Opportunity Cards */
-        <div className="space-y-3">
+        <div className="space-y-2.5">
           {opportunities.map((opp) => {
             const priorityInfo = PRIORITY_LABELS[opp.priority] || PRIORITY_LABELS.medium;
             const stageColor = opp.stage?.color || '#6B7280';
+
+            if (isCompact) {
+              return (
+                <div
+                  key={opp.id}
+                  className="bg-white border border-border rounded-lg p-2.5 shadow-sm hover:shadow transition-shadow relative overflow-hidden text-xs"
+                >
+                  {/* Colored top-line representing stage */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-[3px]"
+                    style={{ backgroundColor: stageColor }}
+                  />
+
+                  <div className="flex justify-between items-start gap-2 pt-1">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-xs text-text leading-tight truncate" title={opp.title}>
+                        {opp.title}
+                      </h4>
+                      <p className="text-[10px] text-textMuted font-medium truncate mt-0.5" title={opp.product_service ? `${opp.product_service.name}` : opp.product_interest}>
+                        Interés: {opp.product_service ? opp.product_service.name : opp.product_interest}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <span className="font-bold text-xs text-primary flex items-center justify-end gap-0.5">
+                        <TrendingUp className="w-3 h-3" />
+                        {opp.expected_value
+                          ? new Intl.NumberFormat('es-MX', {
+                              style: 'currency',
+                              currency: opp.currency || 'MXN',
+                              maximumFractionDigits: 0
+                            }).format(opp.expected_value)
+                          : 'Sin cotizar'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex items-center justify-between gap-2 border-t border-border/40 pt-2 text-[9px]">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-bold text-textMuted bg-gray-50 px-1 py-0.5 border border-border/50 rounded">
+                        {opp.pipeline?.name || 'Venta'}
+                      </span>
+                      <button
+                        onClick={() => onStageChangeClick(opp)}
+                        className="font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 transition-colors hover:bg-gray-50"
+                        style={{
+                          borderColor: `${stageColor}30`,
+                          backgroundColor: `${stageColor}15`,
+                          color: stageColor,
+                        }}
+                        title="Cambiar etapa"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full inline-block"
+                          style={{ backgroundColor: stageColor }}
+                        />
+                        {opp.stage?.name}
+                      </button>
+                      <span
+                        className={`font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider ${priorityInfo.color}`}
+                      >
+                        {priorityInfo.label}
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => onDeleteClick(opp.id)}
+                      className="text-textMuted hover:text-red-600 p-0.5 rounded hover:bg-red-50 transition-colors"
+                      title="Eliminar oportunidad"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
+              );
+            }
 
             return (
               <div

@@ -64,3 +64,17 @@ class ContactListResponse(BaseModel):
     total: int
     page: int
     size: int
+
+
+class ContactActivityResponse(BaseModel):
+    id: UUID
+    opportunity_id: UUID
+    opportunity_title: Optional[str] = None
+    action_type: str
+    description: Optional[str] = None
+    from_stage_name: Optional[str] = None
+    to_stage_name: Optional[str] = None
+    is_system: bool
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)

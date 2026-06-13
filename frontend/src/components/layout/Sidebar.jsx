@@ -5,7 +5,7 @@ export default function Sidebar({ currentView, onViewChange }) {
     { id: 'dashboard', name: 'Hoy', icon: LayoutDashboard, active: true },
     { id: 'contacts', name: 'Contactos', icon: Users, active: true },
     { id: 'opportunities', name: 'Oportunidades', icon: BarChart2, active: true },
-    { id: 'tasks', name: 'Seguimientos', icon: CheckSquare, active: true },
+    // { id: 'tasks', name: 'Seguimientos', icon: CheckSquare, active: true },
     { id: 'kanban', name: 'Tablero Kanban', icon: Columns, active: true },
     { id: 'settings', name: 'Configuración', icon: Settings, active: true },
   ];

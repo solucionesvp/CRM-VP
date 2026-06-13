@@ -234,3 +234,9 @@ export async function deleteProductService(id) {
   });
   return handleResponse(response, 'Error al desactivar/eliminar producto o servicio');
 }
+
+// --- Contact Activities API ---
+export async function fetchContactActivities(contactId) {
+  const response = await fetch(`${API_BASE_URL}/contacts/${contactId}/activities`);
+  return handleResponse(response, 'Error al obtener actividades del contacto');
+}
