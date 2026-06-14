@@ -10,6 +10,11 @@ from app.models.task import Task
 from app.models.product_service import ProductService
 from app.models.quick_reply import QuickReply
 from app.models.stage_rule import StageRule
+# ── Fase 2: WhatsApp / Bot ─────────────────────────────────────────────────────
+from app.models.business_info import BusinessInfo
+from app.models.conversation import Conversation
+from app.models.message import Message
+from app.models.conversation_context import ConversationContext
 
 __all__ = [
     "User",
@@ -23,4 +28,8 @@ __all__ = [
     "ProductService",
     "QuickReply",
     "StageRule",
+    "BusinessInfo",
+    "Conversation",
+    "Message",
+    "ConversationContext",
 ]

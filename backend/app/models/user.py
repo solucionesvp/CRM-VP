@@ -1,8 +1,13 @@
 import uuid
 from datetime import datetime
+from typing import TYPE_CHECKING
 import sqlalchemy as sa
+from sqlalchemy.orm import relationship
 from app.database.session import Base
 from app.models.enums import UserRole
+
+if TYPE_CHECKING:
+    from app.models.conversation import Conversation
 
 class User(Base):
     __tablename__ = "users"
@@ -22,4 +27,10 @@ class User(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
         nullable=False
+    )
+
+    assigned_conversations = relationship(
+        "Conversation",
+        back_populates="assigned_to",
+        foreign_keys="Conversation.assigned_to_user_id"
     )

@@ -1,4 +1,11 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError as e:
+    raise ImportError(
+        "El módulo 'pydantic_settings' no está instalado. Asegúrese de activar el entorno virtual (venv) "
+        "con 'source venv/bin/activate' e instalar las dependencias con 'pip install -r requirements.txt'."
+    ) from e
+
 from pydantic import model_validator
 from typing import Optional
 
@@ -16,6 +23,11 @@ class Settings(BaseSettings):
     # Complete database connection URL (will be assembled if not set)
     DATABASE_URL: Optional[str] = None
 
+    # WhatsApp Cloud API
+    WHATSAPP_TOKEN: str = ""
+    WHATSAPP_PHONE_NUMBER_ID: str = ""
+    WHATSAPP_VERIFY_TOKEN: str = "crmvp2026"
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
         if not self.DATABASE_URL:
@@ -25,7 +37,7 @@ class Settings(BaseSettings):
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
         # Ensure we replace postgres:// with postgresql:// if needed (e.g. Railway/Heroku legacy)
-        if self.DATABASE_URL.startswith("postgres://"):
+        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
             self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
         return self
 
@@ -37,3 +49,4 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+

@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from app.models.opportunity_activity import OpportunityActivity
     from app.models.pipeline import Pipeline
     from app.models.product_service import ProductService
+    from app.models.conversation import Conversation
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
@@ -60,9 +61,10 @@ class Opportunity(Base):
         sa.Index("idx_opportunities_pipeline_id", "pipeline_id"),
     )
 
-    contact = relationship("Contact", back_populates="opportunities")
-    stage = relationship("OpportunityStage")
-    pipeline = relationship("Pipeline")
+    contact         = relationship("Contact",             back_populates="opportunities")
+    stage           = relationship("OpportunityStage")
+    pipeline        = relationship("Pipeline")
     product_service = relationship("ProductService")
-    notes = relationship("OpportunityNote", back_populates="opportunity", cascade="all, delete-orphan")
-    activities = relationship("OpportunityActivity", back_populates="opportunity", cascade="all, delete-orphan")
+    notes           = relationship("OpportunityNote",     back_populates="opportunity", cascade="all, delete-orphan")
+    activities      = relationship("OpportunityActivity", back_populates="opportunity", cascade="all, delete-orphan")
+    conversations   = relationship("Conversation",        back_populates="opportunity")

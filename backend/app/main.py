@@ -71,6 +71,12 @@ app.include_router(product_services_router, prefix="/api/v1")
 from app.api.v1 import commercial
 app.include_router(commercial.router, prefix="/api/v1")
 
+from app.api.v1 import business_info as business_info_router
+app.include_router(business_info_router.router, prefix="/api/v1")
+
+from app.api.v1 import bot as bot_router
+app.include_router(bot_router.router, prefix="/api/v1")
+
 @app.get("/")
 def root():
     return {"status": "ok", "message": "CRM VP API running"}

@@ -89,3 +89,43 @@ class RuleActionType(str, Enum):
     create_task = "create_task"
     suggest_reply = "suggest_reply"
     notify = "notify"
+
+
+# ── WhatsApp / Bot ─────────────────────────────────────────────────────────────
+
+class ConversationChannel(str, Enum):
+    WHATSAPP = "whatsapp"
+    # Prepared for future: instagram, messenger, web_chat, telegram
+
+class ConversationStatus(str, Enum):
+    OPEN = "open"
+    ASSIGNED = "assigned"
+    PENDING = "pending"
+    CLOSED = "closed"
+
+class MessageDirection(str, Enum):
+    INBOUND = "inbound"
+    OUTBOUND = "outbound"
+
+class MessageSenderType(str, Enum):
+    CLIENT = "client"
+    BOT = "bot"
+    HUMAN = "human"
+
+class MessageType(str, Enum):
+    TEXT = "text"
+    IMAGE = "image"
+    AUDIO = "audio"
+    VIDEO = "video"
+    DOCUMENT = "document"
+    LOCATION = "location"
+    CONTACT = "contact"
+    STICKER = "sticker"
+    SYSTEM = "system"
+
+class MessageStatus(str, Enum):
+    PENDING = "pending"
+    SENT = "sent"
+    DELIVERED = "delivered"
+    READ = "read"
+    FAILED = "failed"

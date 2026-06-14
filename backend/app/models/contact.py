@@ -9,6 +9,7 @@ from app.models.enums import ContactType, ContactSource
 
 if TYPE_CHECKING:
     from app.models.opportunity import Opportunity
+    from app.models.conversation import Conversation
 
 class Contact(Base):
     __tablename__ = "contacts"
@@ -58,7 +59,8 @@ class Contact(Base):
         sa.Index("idx_contacts_assigned_to", "assigned_to"),
     )
 
-    opportunities = relationship("Opportunity", back_populates="contact")
+    opportunities  = relationship("Opportunity",  back_populates="contact")
+    conversations  = relationship("Conversation",  back_populates="contact")
 
     @property
     def opportunities_count(self) -> int:
