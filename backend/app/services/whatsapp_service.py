@@ -19,48 +19,27 @@ def _messages_url() -> str:
 
 
 async def send_text_message(to: str, message: str) -> dict:
-    """
-    Envía texto simple via WhatsApp Cloud API.
-    'to' en formato internacional sin '+': '5213114997717'
-    """
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "text",
-        "text": {"body": message},
+    """Envía mensaje via Evolution API"""
+    from app.core.config import settings
+    url = f"{settings.EVOLUTION_API_URL}/message/sendText/{settings.EVOLUTION_INSTANCE}"
+    headers = {
+        "apikey": settings.EVOLUTION_API_KEY,
+        "Content-Type": "application/json"
     }
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            _messages_url(), json=payload, headers=_headers(), timeout=10
-        )
+    payload = {"number": to, "text": message}
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.post(url, json=payload, headers=headers)
         return response.json()
 
 
 async def send_interactive_message(to: str, body: str, buttons: list) -> dict:
     """
-    Envía mensaje con botones interactivos (máximo 3).
-    buttons = [{"id": "select_sales", "title": "Ventas"}, ...]
+    Evolution API no tiene botones interactivos nativos en Baileys.
+    Envía como mensaje de texto con opciones numeradas.
     """
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "interactive",
-        "interactive": {
-            "type": "button",
-            "body": {"text": body},
-            "action": {
-                "buttons": [
-                    {"type": "reply", "reply": {"id": b["id"], "title": b["title"]}}
-                    for b in buttons[:3]
-                ]
-            },
-        },
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
-            _messages_url(), json=payload, headers=_headers(), timeout=10
-        )
-        return response.json()
+    options_text = "\n".join([f"{i+1}. {btn['title']}" for i, btn in enumerate(buttons)])
+    full_message = f"{body}\n\n{options_text}"
+    return await send_text_message(to, full_message)
 
 
 async def send_message_evolution(phone: str, text: str) -> dict:

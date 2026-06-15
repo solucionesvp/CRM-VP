@@ -65,15 +65,105 @@ MENU_BUTTONS = [
 # ── Punto de entrada ───────────────────────────────────────────────────────────
 
 async def process_webhook(payload: dict, db: Session):
-    """Parsea el payload de Meta y procesa cada mensaje."""
+    """Parsea el payload y procesa cada mensaje (Meta o Evolution API)."""
     try:
-        for entry in payload.get("entry", []):
-            for change in entry.get("changes", []):
-                value = change.get("value", {})
-                for msg in value.get("messages", []):
-                    await process_message(msg, db)
-    except Exception:
-        logger.exception("Error procesando webhook")
+        # Detectar formato
+        if payload.get("event") == "messages.upsert":
+            # Formato Evolution API
+            await process_evolution_message(payload, db)
+        elif "entry" in payload:
+            # Formato Meta Cloud API (legacy)
+            entries = payload.get("entry", [])
+            for entry in entries:
+                changes = entry.get("changes", [])
+                for change in changes:
+                    value = change.get("value", {})
+                    messages = value.get("messages", [])
+                    for message in messages:
+                        await process_message(message, db)
+        else:
+            logger.info(f"Webhook ignorado - formato desconocido: {list(payload.keys())}")
+    except Exception as e:
+        logger.error(f"Error procesando webhook: {e}", exc_info=True)
+
+
+async def process_evolution_message(payload: dict, db: Session):
+    """Procesa mensaje en formato Evolution API"""
+    try:
+        data = payload.get("data", {})
+        key = data.get("key", {})
+        
+        # Ignorar mensajes enviados por nosotros
+        if key.get("fromMe", False):
+            return
+        
+        # Ignorar mensajes de grupos
+        remote_jid = key.get("remoteJid", "")
+        if "@g.us" in remote_jid:
+            return
+        
+        # Extraer datos
+        phone = remote_jid.replace("@s.whatsapp.net", "").replace("@c.us", "")
+        message_id = key.get("id", "")
+        push_name = data.get("pushName", "")  # nombre del contacto en WhatsApp
+        
+        # Extraer contenido del mensaje
+        message_obj = data.get("message", {})
+        content = (
+            message_obj.get("conversation") or
+            message_obj.get("extendedTextMessage", {}).get("text") or
+            message_obj.get("imageMessage", {}).get("caption") or
+            message_obj.get("videoMessage", {}).get("caption") or
+            message_obj.get("documentMessage", {}).get("caption") or
+            "[media]"
+        )
+        
+        # Detectar tipo de mensaje
+        msg_type = "text"
+        if "imageMessage" in message_obj:
+            msg_type = "image"
+        elif "audioMessage" in message_obj:
+            msg_type = "audio"
+        elif "videoMessage" in message_obj:
+            msg_type = "video"
+        elif "documentMessage" in message_obj:
+            msg_type = "document"
+        elif "locationMessage" in message_obj:
+            msg_type = "location"
+        
+        if not phone:
+            logger.warning("Mensaje sin número de teléfono, ignorando")
+            return
+
+        # Evitar duplicados
+        if message_id:
+            existing = db.query(Message).filter(
+                Message.external_id == message_id
+            ).first()
+            if existing:
+                return
+
+        # Buscar o crear contacto
+        # Si tenemos push_name y el contacto es nuevo, usarlo como nombre
+        contact, is_new = find_or_create_contact(db, phone, push_name)
+        
+        # Buscar o crear conversación
+        conversation = find_or_create_conversation(db, contact, phone)
+        
+        # Guardar mensaje
+        save_message(db, conversation, message_id, content, msg_type, data)
+        
+        # Contexto del bot
+        context = get_or_create_context(db, conversation)
+        
+        # Detectar intención
+        intent = detect_intent(content, context, is_new)
+        
+        # Ejecutar acción
+        await handle_intent(intent, phone, contact, conversation, context, db)
+        
+    except Exception as e:
+        logger.error(f"Error procesando mensaje Evolution: {e}", exc_info=True)
 
 
 async def process_message(message: dict, db: Session):
@@ -116,25 +206,31 @@ async def process_message(message: dict, db: Session):
 
 # ── Helpers de BD ──────────────────────────────────────────────────────────────
 
-def find_or_create_contact(db: Session, phone: str) -> tuple:
+def find_or_create_contact(db: Session, phone: str, push_name: str = "") -> tuple:
     """Busca contacto por teléfono/whatsapp; lo crea si no existe."""
-    norm = phone.replace("+", "").replace(" ", "")
-
+    normalized = phone.strip().replace("+", "").replace(" ", "")
+    
     contact = db.query(Contact).filter(
-        (Contact.whatsapp == norm) |
-        (Contact.whatsapp == f"+{norm}") |
-        (Contact.phone    == norm) |
-        (Contact.phone    == f"+{norm}")
+        (Contact.whatsapp == normalized) | 
+        (Contact.whatsapp == f"+{normalized}") |
+        (Contact.phone == normalized) |
+        (Contact.phone == f"+{normalized}")
     ).first()
-
+    
     if contact:
+        # Si el contacto tiene nombre placeholder y ahora tenemos el real
+        if push_name and contact.name.startswith("WhatsApp "):
+            contact.name = push_name
+            db.commit()
         return contact, False
-
+    
+    # Crear contacto con nombre real si disponible
+    name = push_name if push_name else f"WhatsApp {normalized}"
     contact = Contact(
         type=ContactType.person,
-        name=f"WhatsApp {norm}",
-        whatsapp=norm,
-        phone=norm,
+        name=name,
+        whatsapp=normalized,
+        phone=normalized,
     )
     db.add(contact)
     db.commit()

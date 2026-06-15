@@ -1,3 +1,5 @@
+import json
+import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, BackgroundTasks
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
@@ -5,6 +7,8 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.database.session import get_db
 from app.services import bot_engine
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/bot", tags=["bot"])
 
@@ -35,5 +39,7 @@ async def receive_webhook(
     Responde 200 inmediatamente; el procesamiento ocurre en background.
     """
     payload = await request.json()
+    # Log para debug
+    logger.info(f"WEBHOOK PAYLOAD: {json.dumps(payload, ensure_ascii=False)[:500]}")
     background_tasks.add_task(bot_engine.process_webhook, payload, db)
     return {"status": "ok"}
