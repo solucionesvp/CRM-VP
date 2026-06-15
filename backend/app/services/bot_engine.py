@@ -356,11 +356,26 @@ async def handle_intent(
                            area_name="Refacciones",
                            reply="¡Claro! Te ayudamos con refacciones. ¿Qué pieza necesitas?")
     else:
+        body = "No entendí tu mensaje 😊 Por favor selecciona una opción:"
         await whatsapp_service.send_interactive_message(
             to=phone,
-            body="No entendí tu mensaje 😊 Por favor selecciona una opción:",
+            body=body,
             buttons=MENU_BUTTONS,
         )
+        options_text = "\n".join([f"{i+1}. {btn['title']}" for i, btn in enumerate(MENU_BUTTONS)])
+        full_message = f"{body}\n\n{options_text}"
+        
+        bot_message = Message(
+            conversation_id=conversation.id,
+            direction=MessageDirection.OUTBOUND,
+            sender_type=MessageSenderType.BOT,
+            message_type=MessageType.TEXT,
+            content=full_message,
+            status=MessageStatus.SENT,
+        )
+        db.add(bot_message)
+        conversation.last_message_preview = full_message[:100]
+        db.commit()
 
 
 async def _send_welcome(
@@ -374,6 +389,21 @@ async def _send_welcome(
     await whatsapp_service.send_interactive_message(
         to=phone, body=body, buttons=MENU_BUTTONS
     )
+    
+    options_text = "\n".join([f"{i+1}. {btn['title']}" for i, btn in enumerate(MENU_BUTTONS)])
+    full_message = f"{body}\n\n{options_text}"
+    
+    bot_message = Message(
+        conversation_id=conversation.id,
+        direction=MessageDirection.OUTBOUND,
+        sender_type=MessageSenderType.BOT,
+        message_type=MessageType.TEXT,
+        content=full_message,
+        status=MessageStatus.SENT,
+    )
+    db.add(bot_message)
+    conversation.last_message_preview = full_message[:100]
+    
     context.current_flow    = "welcome"
     context.current_intent  = "greeting"
     context.last_bot_action = "send_welcome"
@@ -386,6 +416,17 @@ async def _handle_area(
     pipeline_slug: str, area_name: str, reply: str
 ):
     await whatsapp_service.send_text_message(to=phone, message=reply)
+
+    bot_message = Message(
+        conversation_id=conversation.id,
+        direction=MessageDirection.OUTBOUND,
+        sender_type=MessageSenderType.BOT,
+        message_type=MessageType.TEXT,
+        content=reply,
+        status=MessageStatus.SENT,
+    )
+    db.add(bot_message)
+    conversation.last_message_preview = reply[:100]
 
     # Crear oportunidad solo si la conversación aún no tiene una
     if not conversation.opportunity_id:

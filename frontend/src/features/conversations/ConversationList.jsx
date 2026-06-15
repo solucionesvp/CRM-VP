@@ -35,7 +35,7 @@ function ConversationItem({ conv, isSelected, onClick, departments }) {
           {initial}
         </div>
         {conv.bot_active && (
-          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center">
+          <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-[#10B981] rounded-full flex items-center justify-center" title="Bot activo">
             <Bot className="w-2.5 h-2.5 text-white" />
           </span>
         )}

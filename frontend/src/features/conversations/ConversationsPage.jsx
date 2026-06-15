@@ -46,7 +46,7 @@ export default function ConversationsPage({ onNavigateToContact }) {
   };
 
   return (
-    <div className="flex h-full min-h-0 -mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
+    <div className="flex h-full w-full min-h-0">
       <ConversationList
         conversations={conversations}
         departments={departments}

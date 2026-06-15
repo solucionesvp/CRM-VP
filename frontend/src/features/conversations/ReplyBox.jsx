@@ -36,16 +36,15 @@ export default function ReplyBox({ conversation, onSend, onToggleBot }) {
   return (
     <div className="border-t border-gray-200 bg-white">
       {botActive && (
-        <div className="flex items-center justify-between bg-amber-50 border-b border-amber-200 px-4 py-2">
-          <div className="flex items-center gap-2 text-amber-700 text-xs font-semibold">
-            <Bot className="w-4 h-4" />
-            El bot está respondiendo activamente
+        <div className="flex items-center justify-between bg-orange-50 border-b border-orange-100 px-4 py-2.5">
+          <div className="flex items-center gap-2 text-[#e05a1a] text-xs font-semibold">
+            <span>🤖 El bot está respondiendo. Desactívalo para escribir.</span>
           </div>
           <button
             onClick={onToggleBot}
-            className="text-xs text-amber-800 underline hover:text-amber-900 font-bold"
+            className="text-xs bg-[#FC6621] text-white px-3 py-1 rounded-lg hover:bg-[#e05a1a] transition-colors font-bold"
           >
-            Desactivar y responder manualmente
+            Desactivar bot
           </button>
         </div>
       )}

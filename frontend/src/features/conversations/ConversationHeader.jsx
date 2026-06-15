@@ -112,12 +112,11 @@ export default function ConversationHeader({ conversation, departments, onUpdate
             onClick={handleToggleBot}
             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-colors ${
               conversation.bot_active
-                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                ? 'bg-[#10B981] text-white hover:bg-[#0e9f6e]'
                 : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
             }`}
           >
-            <span className={`w-2 h-2 rounded-full ${conversation.bot_active ? 'bg-orange-500' : 'bg-gray-400'}`} />
-            Bot {conversation.bot_active ? 'activo' : 'inactivo'}
+            {conversation.bot_active ? '🤖 Bot activo' : 'Bot inactivo'}
           </button>
 
           {/* View contact */}

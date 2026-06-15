@@ -35,29 +35,28 @@ export function DateSeparator({ date }) {
 }
 
 export default function MessageBubble({ message }) {
-  const isInbound = message.direction === 'inbound';
-  const isBot = message.sender_type === 'bot';
-  const isHuman = message.sender_type === 'human';
+  const isInbound = message.direction?.toLowerCase() === 'inbound';
+  const isBot = message.sender_type?.toLowerCase() === 'bot';
+  const isHuman = message.sender_type?.toLowerCase() === 'human';
 
   const bubbleClass = isInbound
-    ? 'bg-gray-100 text-gray-800 rounded-tl-sm self-start'
+    ? 'bg-[#F3F4F6] text-gray-800 rounded-tl-sm self-start'
     : isBot
-      ? 'bg-orange-50 border border-orange-200 text-gray-800 rounded-tr-sm self-end'
+      ? 'bg-[#FFF3ED] border border-[#FC6621] text-gray-800 rounded-tr-sm self-end'
       : 'bg-[#FC6621] text-white rounded-tr-sm self-end';
 
   const senderLabel = isInbound
     ? 'Cliente'
     : isBot
-      ? 'Bot'
-      : 'Agente';
+      ? '🤖 Bot'
+      : '👤 Agente';
 
   return (
     <div className={`flex ${isInbound ? 'justify-start' : 'justify-end'} mb-2`}>
       <div className={`max-w-[75%] flex flex-col gap-0.5`}>
         <div className={`flex items-center gap-1.5 ${isInbound ? 'flex-row' : 'flex-row-reverse'}`}>
           {!isInbound && (
-            <span className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold">
-              {isBot ? <Bot className="w-3 h-3" /> : <User className="w-3 h-3" />}
+            <span className="flex items-center gap-1 text-[10px] text-gray-400 font-semibold mb-0.5">
               {senderLabel}
             </span>
           )}
@@ -65,7 +64,7 @@ export default function MessageBubble({ message }) {
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${bubbleClass}`}>
           {message.content || <span className="italic text-gray-400 text-xs">Mensaje no textual</span>}
         </div>
-        <span className={`text-[10px] text-gray-400 ${isInbound ? 'text-left' : 'text-right'}`}>
+        <span className={`text-[10px] text-gray-400 ${isInbound ? 'text-left' : 'text-right'} mt-0.5`}>
           {formatTime(message.created_at)}
         </span>
       </div>
