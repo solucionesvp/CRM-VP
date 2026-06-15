@@ -11,6 +11,7 @@ import SettingsPage from './features/settings/SettingsPage';
 import TaskList from './features/tasks/TaskList';
 import Dashboard from './features/dashboard/Dashboard';
 import { fetchContacts, fetchContactById, deleteContact } from './lib/api';
+import ConversationsPage from './features/conversations/ConversationsPage';
 
 import { Plus } from 'lucide-react';
 
@@ -210,6 +211,12 @@ function App() {
       {currentView === 'tasks' && (
         <div className="animate-fadeIn">
           <TaskList />
+        </div>
+      )}
+
+      {currentView === 'conversations' && (
+        <div className="animate-fadeIn -mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
+          <ConversationsPage onNavigateToContact={handleNavigateToContact} />
         </div>
       )}
 

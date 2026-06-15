@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     WHATSAPP_PHONE_NUMBER_ID: str = ""
     WHATSAPP_VERIFY_TOKEN: str = "crmvp2026"
 
+    # Evolution API (actual WhatsApp gateway)
+    EVOLUTION_API_URL: str = "https://evolution-api-production-acf96.up.railway.app"
+    EVOLUTION_API_KEY: str = "crmvp2026evo"
+    EVOLUTION_INSTANCE: str = "vp-test"
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
         if not self.DATABASE_URL:

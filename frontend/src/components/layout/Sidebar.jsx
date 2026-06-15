@@ -1,11 +1,11 @@
-import { LayoutDashboard, Users, BarChart2, Columns, Settings, Shield, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, Columns, Settings, Shield, MessageSquare } from 'lucide-react';
 
 export default function Sidebar({ currentView, onViewChange }) {
   const menuItems = [
     { id: 'dashboard', name: 'Hoy', icon: LayoutDashboard, active: true },
     { id: 'contacts', name: 'Contactos', icon: Users, active: true },
     { id: 'opportunities', name: 'Oportunidades', icon: BarChart2, active: true },
-    // { id: 'tasks', name: 'Seguimientos', icon: CheckSquare, active: true },
+    { id: 'conversations', name: 'Conversaciones', icon: MessageSquare, active: true },
     { id: 'kanban', name: 'Tablero Kanban', icon: Columns, active: true },
     { id: 'settings', name: 'Configuración', icon: Settings, active: true },
   ];

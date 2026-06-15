@@ -240,3 +240,94 @@ export async function fetchContactActivities(contactId) {
   const response = await fetch(`${API_BASE_URL}/contacts/${contactId}/activities`);
   return handleResponse(response, 'Error al obtener actividades del contacto');
 }
+
+// --- Conversations API ---
+export async function fetchConversations({ status = '', department = '', bot_active = '', search = '', page = 1, size = 30 } = {}) {
+  const params = new URLSearchParams();
+  params.append('page', page);
+  params.append('size', size);
+  if (status) params.append('status', status);
+  if (department) params.append('assigned_department', department);
+  if (bot_active !== '') params.append('bot_active', bot_active);
+  if (search) params.append('search', search);
+  const response = await fetch(`${API_BASE_URL}/conversations/?${params}`);
+  return handleResponse(response, 'Error al obtener conversaciones');
+}
+
+export async function fetchConversationById(id) {
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}`);
+  return handleResponse(response, 'Error al obtener conversación');
+}
+
+export async function fetchConversationMessages(id, page = 1, size = 100) {
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}/messages?page=${page}&size=${size}`);
+  return handleResponse(response, 'Error al obtener mensajes');
+}
+
+export async function sendConversationMessage(id, text) {
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text }),
+  });
+  return handleResponse(response, 'Error al enviar mensaje');
+}
+
+export async function updateConversation(id, data) {
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al actualizar conversación');
+}
+
+export async function assignConversation(id, department, userId) {
+  const body = {};
+  if (department) body.department = department;
+  if (userId) body.user_id = userId;
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}/assign`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  return handleResponse(response, 'Error al asignar conversación');
+}
+
+export async function createConversationOpportunity(id, data) {
+  const response = await fetch(`${API_BASE_URL}/conversations/${id}/opportunities`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al crear oportunidad');
+}
+
+// --- Departments API ---
+export async function fetchDepartments() {
+  const response = await fetch(`${API_BASE_URL}/departments/`);
+  return handleResponse(response, 'Error al obtener departamentos');
+}
+
+export async function createDepartment(data) {
+  const response = await fetch(`${API_BASE_URL}/departments/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al crear departamento');
+}
+
+export async function updateDepartment(id, data) {
+  const response = await fetch(`${API_BASE_URL}/departments/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al actualizar departamento');
+}
+
+export async function deleteDepartment(id) {
+  const response = await fetch(`${API_BASE_URL}/departments/${id}`, { method: 'DELETE' });
+  return handleResponse(response, 'Error al eliminar departamento');
+}

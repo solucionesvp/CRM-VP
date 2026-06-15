@@ -15,6 +15,7 @@ from app.models.business_info import BusinessInfo
 from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.conversation_context import ConversationContext
+from app.models.department import Department
 
 __all__ = [
     "User",
@@ -32,4 +33,5 @@ __all__ = [
     "Conversation",
     "Message",
     "ConversationContext",
+    "Department",
 ]
