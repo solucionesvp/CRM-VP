@@ -16,6 +16,8 @@ from app.models.conversation import Conversation
 from app.models.message import Message
 from app.models.conversation_context import ConversationContext
 from app.models.department import Department
+# DepartmentAgent debe importarse después de Department y User
+from app.models.department_agent import DepartmentAgent
 
 __all__ = [
     "User",
@@ -34,4 +36,5 @@ __all__ = [
     "Message",
     "ConversationContext",
     "Department",
+    "DepartmentAgent",
 ]

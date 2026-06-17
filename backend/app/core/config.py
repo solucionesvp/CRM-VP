@@ -42,7 +42,7 @@ class Settings(BaseSettings):
                 f"@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
             )
         # Ensure we replace postgres:// with postgresql:// if needed (e.g. Railway/Heroku legacy)
-        if self.DATABASE_URL and self.DATABASE_URL.startswith("postgres://"):
+        if self.DATABASE_URL and self.DATABASE_URL.startswith("po   stgres://"):
             self.DATABASE_URL = self.DATABASE_URL.replace("postgres://", "postgresql://", 1)
         return self
 

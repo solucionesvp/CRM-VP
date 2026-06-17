@@ -32,5 +32,8 @@ class User(Base):
     assigned_conversations = relationship(
         "Conversation",
         back_populates="assigned_to",
-        foreign_keys="Conversation.assigned_to_user_id"
+        foreign_keys="Conversation.assigned_to_user_id",
     )
+
+    # Membresías en departamentos (via tabla intermedia)
+    department_links = relationship("DepartmentAgent", back_populates="user")
