@@ -42,23 +42,77 @@ MENU_BUTTONS = [
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
+def _format_business_hours(hours: dict) -> str:
+    """Agrupa dias consecutivos con mismo horario en texto legible."""
+    if not hours:
+        return ""
+    dia_orden = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+    dia_es = {"monday": "Lunes", "tuesday": "Martes", "wednesday": "Miercoles",
+              "thursday": "Jueves", "friday": "Viernes", "saturday": "Sabado", "sunday": "Domingo"}
+    grupos = []
+    for dia in dia_orden:
+        info = hours.get(dia) or {}
+        closed = info.get("closed", False)
+        clave = "cerrado" if closed else f"{info.get('open')}-{info.get('close')}"
+        if grupos and grupos[-1]["clave"] == clave:
+            grupos[-1]["dias"].append(dia)
+        else:
+            grupos.append({"clave": clave, "dias": [dia]})
+    partes = []
+    for g in grupos:
+        dias = g["dias"]
+        etiqueta = dia_es[dias[0]] if len(dias) == 1 else f"{dia_es[dias[0]]} a {dia_es[dias[-1]]}"
+        if g["clave"] == "cerrado":
+            partes.append(f"{etiqueta}: cerrado")
+        else:
+            partes.append(f"{etiqueta}: {g['clave']}")
+    return ", ".join(partes)
+
+
 def build_business_context(info) -> str:
-    """Formatea BusinessInfo como texto plano para el system prompt."""
+    """Formatea BusinessInfo como texto plano completo para el system prompt."""
     if not info:
         return "Informacion del negocio no disponible aun."
-    parts = [f"Empresa: {info.name}"]
+    partes = [f"Empresa: {info.name}"]
     if info.description:
-        parts.append(f"Descripcion: {info.description}")
-    if info.city:
-        parts.append(f"Ubicacion: {info.city}{', ' + info.state if info.state else ''}")
+        partes.append(f"Descripcion: {info.description}")
+    if info.address:
+        ubicacion = info.address
+        if info.city:
+            ubicacion += f", {info.city}"
+        if info.state:
+            ubicacion += f", {info.state}"
+        if info.postal_code:
+            ubicacion += f", CP {info.postal_code}"
+        partes.append(f"Direccion: {ubicacion}")
+    elif info.city:
+        partes.append(f"Ubicacion: {info.city}{', ' + info.state if info.state else ''}")
+    if info.google_maps_url:
+        partes.append(f"Link de Maps: {info.google_maps_url}")
+    if info.business_hours:
+        horario = _format_business_hours(info.business_hours)
+        if horario:
+            partes.append(f"Horario: {horario}")
     if info.phone:
-        parts.append(f"Telefono: {info.phone}")
+        partes.append(f"Telefono: {info.phone}")
+    if info.telefono_oficina:
+        partes.append(f"Telefono oficina: {info.telefono_oficina}")
+    if info.whatsapp_number:
+        partes.append(f"WhatsApp: {info.whatsapp_number}")
     if info.website:
-        parts.append(f"Web: {info.website}")
+        partes.append(f"Web: {info.website}")
     if info.areas_served:
         areas = ", ".join(info.areas_served) if isinstance(info.areas_served, list) else str(info.areas_served)
-        parts.append(f"Areas de servicio: {areas}")
-    return "\n".join(parts)
+        partes.append(f"Areas de servicio: {areas}")
+    if info.formas_pago:
+        partes.append(f"Formas de pago: {info.formas_pago}")
+    if info.tiempos_entrega:
+        partes.append(f"Tiempos de entrega: {info.tiempos_entrega}")
+    if info.politica_cambios_devoluciones:
+        partes.append(f"Politica de cambios/devoluciones: {info.politica_cambios_devoluciones}")
+    if info.requisitos_cotizacion:
+        partes.append(f"Requisitos para cotizar: {info.requisitos_cotizacion}")
+    return "\n".join(partes)
 
 
 def save_bot_message(db: Session, conversation: Conversation, text: str) -> Message:
