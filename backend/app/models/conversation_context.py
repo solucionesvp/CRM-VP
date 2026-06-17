@@ -31,6 +31,8 @@ class ConversationContext(Base):
     # ── Human handoff ──────────────────────────────────────────────────────────
     handoff_to_human = sa.Column(sa.Boolean, nullable=False, default=False)
     handoff_reason   = sa.Column(sa.String,  nullable=True)
+    # Resumen legible generado por la IA al escalar; visible para el agente humano
+    handoff_summary  = sa.Column(sa.Text,    nullable=True)
 
     # ── Long-term bot memory (arbitrary key-value store) ───────────────────────
     bot_memory = sa.Column(sa.JSON, nullable=True, default=dict)

@@ -36,6 +36,13 @@ class BusinessInfo(Base):
     # List of areas/departments served
     areas_served     = sa.Column(sa.JSON, nullable=True)
 
+    # Business Policies & Information
+    politica_cambios_devoluciones = sa.Column(sa.Text, nullable=True)
+    tiempos_entrega               = sa.Column(sa.Text, nullable=True)
+    formas_pago                   = sa.Column(sa.Text, nullable=True)
+    telefono_oficina              = sa.Column(sa.String, nullable=True)
+    requisitos_cotizacion         = sa.Column(sa.Text, nullable=True)
+
     # Bot copy
     description          = sa.Column(sa.Text, nullable=True)
     bot_welcome_message  = sa.Column(sa.Text, nullable=True)

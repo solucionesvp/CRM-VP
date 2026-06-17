@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     EVOLUTION_API_KEY: str = "crmvp2026evo"
     EVOLUTION_INSTANCE: str = "vp-test"
 
+    # OpenAI — clasificador de mensajes del bot
+    OPENAI_API_KEY: str = ""              # requerida para IA real; fallback a keywords si vacia
+    OPENAI_MODEL: str = "gpt-4o-mini"    # cambiar a gpt-5.4-mini via .env / Railway
+
+    # Bot — ventana de espera para mensajes fragmentados (debounce)
+    BOT_DEBOUNCE_SECONDS: float = 8.0    # segundos de silencio antes de procesar
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
         if not self.DATABASE_URL:

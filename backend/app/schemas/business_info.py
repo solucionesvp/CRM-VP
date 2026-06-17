@@ -26,6 +26,11 @@ class BusinessInfoBase(BaseModel):
     website: Optional[str] = None
     business_hours: Optional[Dict[str, Any]] = None
     areas_served: Optional[List[str]] = None
+    politica_cambios_devoluciones: Optional[str] = None
+    tiempos_entrega: Optional[str] = None
+    formas_pago: Optional[str] = None
+    telefono_oficina: Optional[str] = None
+    requisitos_cotizacion: Optional[str] = None
     description: Optional[str] = None
     bot_welcome_message: Optional[str] = None
     bot_away_message: Optional[str] = None
@@ -48,6 +53,11 @@ class BusinessInfoUpdate(BaseModel):
     website: Optional[str] = None
     business_hours: Optional[Dict[str, Any]] = None
     areas_served: Optional[List[str]] = None
+    politica_cambios_devoluciones: Optional[str] = None
+    tiempos_entrega: Optional[str] = None
+    formas_pago: Optional[str] = None
+    telefono_oficina: Optional[str] = None
+    requisitos_cotizacion: Optional[str] = None
     description: Optional[str] = None
     bot_welcome_message: Optional[str] = None
     bot_away_message: Optional[str] = None
