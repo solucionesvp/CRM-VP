@@ -56,3 +56,54 @@ async def send_message_evolution(phone: str, text: str) -> dict:
     async with httpx.AsyncClient(timeout=30) as client:
         response = await client.post(url, json=payload, headers=headers)
         return response.json()
+
+
+async def get_connection_status() -> str:
+    """
+    Obtiene el estado de conexión de la instancia de Evolution API.
+    Regresa el campo 'state' (open/close/connecting).
+    """
+    url = f"{settings.EVOLUTION_API_URL}/instance/connectionState/{settings.EVOLUTION_INSTANCE}"
+    headers = {
+        "apikey": settings.EVOLUTION_API_KEY,
+    }
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            response = await client.get(url, headers=headers)
+            if response.status_code != 200:
+                return "close"
+            data = response.json()
+            if isinstance(data, dict):
+                instance_data = data.get("instance")
+                if isinstance(instance_data, dict):
+                    return instance_data.get("state", "close")
+                return data.get("state", "close")
+            return "close"
+        except Exception:
+            return "close"
+
+
+async def request_pairing_code(phone_number: str) -> str:
+    """
+    Solicita un código de vinculación para conectar un número de teléfono.
+    Regresa el código de vinculación obtenido.
+    """
+    url = f"{settings.EVOLUTION_API_URL}/instance/connect/{settings.EVOLUTION_INSTANCE}"
+    headers = {
+        "apikey": settings.EVOLUTION_API_KEY,
+    }
+    params = {"number": phone_number}
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.get(url, params=params, headers=headers)
+        if response.status_code not in (200, 201):
+            try:
+                err_detail = response.json().get("message", "Error al conectar")
+            except Exception:
+                err_detail = response.text
+            raise Exception(f"Error de Evolution API ({response.status_code}): {err_detail}")
+        
+        data = response.json()
+        code = data.get("pairingCode") or data.get("code")
+        if not code:
+            raise Exception("No se encontró el código de vinculación en la respuesta")
+        return code

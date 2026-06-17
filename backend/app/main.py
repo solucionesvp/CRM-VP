@@ -83,6 +83,10 @@ app.include_router(conversations_router.router, prefix="/api/v1")
 from app.api.v1 import departments as departments_router
 app.include_router(departments_router.router, prefix="/api/v1")
 
+from app.api.v1 import whatsapp as whatsapp_router
+app.include_router(whatsapp_router.router, prefix="/api/v1")
+
+
 @app.get("/")
 def root():
     return {"status": "ok", "message": "CRM VP API running"}

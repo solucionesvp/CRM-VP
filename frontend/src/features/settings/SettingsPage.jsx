@@ -6,6 +6,7 @@ import StageManager from './StageManager';
 import ProductServiceManager from './ProductServiceManager';
 import CommercialEngine from './CommercialEngine';
 import DepartmentManager from './DepartmentManager';
+import WhatsAppConnect from './WhatsAppConnect';
 
 export default function SettingsPage() {
   const [pipelines, setPipelines] = useState([]);
@@ -84,6 +85,14 @@ export default function SettingsPage() {
         >
           Departamentos
         </button>
+        <button
+          onClick={() => setActiveTab('whatsapp')}
+          className={`py-2 px-4 font-semibold text-sm focus:outline-none ${
+            activeTab === 'whatsapp' ? 'border-b-2 border-primary text-primary' : 'text-textMuted hover:text-text'
+          }`}
+        >
+          Conexión WhatsApp
+        </button>
       </div>
 
       {activeTab === 'pipelines' && (
@@ -132,6 +141,12 @@ export default function SettingsPage() {
       {activeTab === 'departments' && (
         <div className="animate-fadeIn bg-white p-6 rounded-lg shadow-sm border border-border">
           <DepartmentManager />
+        </div>
+      )}
+
+      {activeTab === 'whatsapp' && (
+        <div className="animate-fadeIn bg-white p-6 rounded-lg shadow-sm border border-border">
+          <WhatsAppConnect />
         </div>
       )}
     </div>

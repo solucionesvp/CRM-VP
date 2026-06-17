@@ -331,3 +331,19 @@ export async function deleteDepartment(id) {
   const response = await fetch(`${API_BASE_URL}/departments/${id}`, { method: 'DELETE' });
   return handleResponse(response, 'Error al eliminar departamento');
 }
+
+// --- WhatsApp API ---
+export async function fetchWhatsAppStatus() {
+  const response = await fetch(`${API_BASE_URL}/whatsapp/status`);
+  return handleResponse(response, 'Error al obtener el estado de WhatsApp');
+}
+
+export async function connectWhatsApp(phoneNumber) {
+  const response = await fetch(`${API_BASE_URL}/whatsapp/connect`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone_number: phoneNumber }),
+  });
+  return handleResponse(response, 'Error al conectar con WhatsApp');
+}
+
