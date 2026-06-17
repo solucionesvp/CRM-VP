@@ -107,7 +107,7 @@ async def classify(
             messages=messages,
             tools=[_CLASSIFY_TOOL],
             tool_choice={"type": "function", "function": {"name": "classify"}},
-            max_tokens=500,
+            max_completion_tokens=500,
             temperature=0.3,
         )
         args = json.loads(resp.choices[0].message.tool_calls[0].function.arguments)
