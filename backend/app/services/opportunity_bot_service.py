@@ -35,9 +35,9 @@ PIPELINE_FOR_INTENT: dict = {
 # Primera etapa activa de cada pipeline (IDs confirmados en diagnóstico SQL).
 # pipeline_id → stage_id (order=1, is_active=True)
 FIRST_STAGE_FOR_PIPELINE: dict = {
-    1: 9,    # Nuevo interés
-    2: 16,   # Recibido
-    3: 22,   # Solicitud
+    1: 1,    # Nuevo interés
+    2: 8,    # Recibido
+    3: 14,   # Solicitud
 }
 
 
