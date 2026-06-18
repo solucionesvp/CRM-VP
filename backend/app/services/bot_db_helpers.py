@@ -179,6 +179,36 @@ def build_customer_history_context(db: Session, contact: Contact) -> str:
     return "Cliente existente. Historial reciente:\n" + "\n".join(lineas)
 
 
+def get_active_opportunities_for_contact(db: Session, contact_id) -> list:
+    """Retorna oportunidades activas (no ganadas, no perdidas) de un contacto.
+
+    Devuelve lista de dicts serializable — seguro para pasar a servicios externos.
+    """
+    from app.models.enums import OpportunityStatus
+    opps = (
+        db.query(Opportunity)
+        .options(joinedload(Opportunity.stage), joinedload(Opportunity.pipeline))
+        .filter(
+            Opportunity.contact_id == contact_id,
+            Opportunity.deleted_at.is_(None),
+            Opportunity.status.notin_([OpportunityStatus.won, OpportunityStatus.lost]),
+        )
+        .order_by(Opportunity.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    return [
+        {
+            "id":               str(opp.id),
+            "title":            opp.title,
+            "product_interest": opp.product_interest,
+            "pipeline_name":    opp.pipeline.name if opp.pipeline else "?",
+            "stage_name":       opp.stage.name    if opp.stage    else "?",
+        }
+        for opp in opps
+    ]
+
+
 def get_opportunity_stage_context(db: Session, conversation: Conversation):
     """Retorna el contexto de etapas Kanban para la oportunidad vinculada a la conversación.
 

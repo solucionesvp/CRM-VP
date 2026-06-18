@@ -150,6 +150,9 @@ async def _process_debounced(db: Session, conv_id) -> None:
     info     = get_business_info(db)
     biz_ctx  = bot_responder.build_business_context(info)
     cust_hist = db_h.build_customer_history_context(db, conv.contact)
+    # stage_ctx puede ser None si la oportunidad se acaba de crear en este turno
+    # (decide_and_link_opportunity corre DENTRO de handle_result, después de este punto).
+    # El Kanban avanzará a partir del siguiente mensaje del cliente.
     stage_ctx  = db_h.get_opportunity_stage_context(db, conv)
     history  = db_h.build_history_before(db, conv_id)
 

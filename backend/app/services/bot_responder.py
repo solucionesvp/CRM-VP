@@ -16,6 +16,7 @@ from app.models.enums import MessageDirection, MessageSenderType, MessageType, M
 from app.services import whatsapp_service, department_agent_service
 from app.services.ai_classifier_service import ClassificationResult
 from app.services import opportunity_service
+from app.services import opportunity_bot_service
 
 logger = logging.getLogger(__name__)
 
@@ -244,6 +245,10 @@ async def handle_result(
         save_bot_message(db, conversation, ESCALATION_MSG)
         do_escalate(db, conversation, context, dept_slug, result.handoff_summary)
         _try_advance_stage(db, stage_context, result.intent)
+        await opportunity_bot_service.decide_and_link_opportunity(
+            db, conversation, contact, result.intent,
+            dict(context.collected_data or {})
+        )
         return
 
     # 3. Respuesta normal — usar sugerencia de la IA o menú por defecto
@@ -256,6 +261,10 @@ async def handle_result(
         await whatsapp_service.send_interactive_message(to=phone, body=body, buttons=MENU_BUTTONS)
         save_bot_message(db, conversation, body)
     _try_advance_stage(db, stage_context, result.intent)
+    await opportunity_bot_service.decide_and_link_opportunity(
+        db, conversation, contact, result.intent,
+        dict(context.collected_data or {})
+    )
 
     # 4. Actualizar estado del flujo en contexto
     context.current_intent  = result.intent
