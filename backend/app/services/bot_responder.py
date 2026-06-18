@@ -138,7 +138,9 @@ def do_escalate(
     summary: Optional[str],
 ) -> None:
     """Asigna agente via round-robin, marca handoff y guarda resumen."""
-    department_agent_service.auto_assign_conversation(db, conversation.id, dept_slug)
+    assigned = department_agent_service.auto_assign_conversation(db, conversation.id, dept_slug)
+    if not assigned:
+        logger.warning(f"No se pudo asignar conversacion {conversation.id} al departamento '{dept_slug}'")
     context.handoff_to_human = True
     context.handoff_reason   = "escalated_by_bot"
     if summary:
@@ -175,6 +177,8 @@ async def handle_result(
             contact.name = nombre
             db.commit()
 
+    context.collected_data  = {**dict(context.collected_data or {}), "calificacion": result.calificacion}
+
     # 2. Escalamiento — si la IA lo decide O la intención es explícitamente humano
     if result.should_escalate or result.intent == "escalate_human":
         dept_slug = (
@@ -201,5 +205,4 @@ async def handle_result(
     context.current_intent  = result.intent
     context.current_flow    = INTENT_TO_DEPT.get(result.intent, result.intent)
     context.last_bot_action = f"ai_response_{result.intent}"
-    context.collected_data  = {**dict(context.collected_data or {}), "calificacion": result.calificacion}
     db.commit()

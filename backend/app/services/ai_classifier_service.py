@@ -35,7 +35,12 @@ _CLASSIFY_TOOL = {"type": "function", "function": {
                                   "ciudad":   {"type": "string", "description": "Ciudad del CLIENTE si la menciona. NUNCA la ciudad donde esta VP."},
                                   "urgencia": {"type": "string", "description": "Nivel de urgencia si el cliente lo expresa"}}},
         "should_escalate":   {"type": "boolean"},
-        "escalate_dept_slug":{"type": "string", "description": "slug del departamento al que escalar si should_escalate=true"},
+        "escalate_dept_slug": {
+            "type": "string",
+            "enum": ["ventas", "servicio_refacciones", "marketing", "administracion", 
+                     "atencion_cliente", "operaciones", "gerencia"],
+            "description": "Slug EXACTO del departamento real al que escalar. NUNCA inventar uno nuevo aunque el tema se parezca a otra area — usa siempre uno de estos 7."
+        },
         "suggested_response":{"type": "string", "description": "respuesta al cliente en espanol, max 200 chars"},
         "handoff_summary":   {"type": "string", "description": "resumen breve para el agente humano si hay escalamiento"},
         "calificacion":      {"type": "string", "enum": ["curioso", "caliente", "urgente", "problema", "cliente_existente", "no_apto"],
