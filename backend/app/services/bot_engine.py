@@ -152,11 +152,15 @@ async def _process_debounced(db: Session, conv_id) -> None:
     cust_hist = db_h.build_customer_history_context(db, conv.contact)
     history  = db_h.build_history_before(db, conv_id)
 
+    collected = dict(context.collected_data or {})
+    if "nombre" not in collected and not conv.contact.name.startswith("WhatsApp "):
+        collected["nombre"] = conv.contact.name
+
     result = await ai_classifier_service.classify(
         message_text=combined,
         recent_history=history,
         business_context=biz_ctx,
-        collected_data=dict(context.collected_data or {}),
+        collected_data=collected,
         customer_history=cust_hist,
     )
     await bot_responder.handle_result(result, conv.channel_identifier, conv.contact, conv, context, db)
