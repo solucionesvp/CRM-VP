@@ -5,11 +5,12 @@ conversación, contexto y persistencia de mensajes.
 Extraídos de bot_engine.py para mantener ese archivo ≤ 100 líneas.
 """
 import logging
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.models.contact import Contact
 from app.models.conversation import Conversation
 from app.models.conversation_context import ConversationContext
 from app.models.message import Message
+from app.models.opportunity import Opportunity
 from app.models.enums import (
     ConversationChannel, ConversationStatus,
     MessageDirection, MessageSenderType, MessageType, MessageStatus,
@@ -151,4 +152,28 @@ def build_history_before(db: Session, conversation_id) -> list:
          "content": m.content}
         for m in msgs if m.content and m.content != "[media]"
     ]
+
+
+def build_customer_history_context(db: Session, contact: Contact) -> str:
+    """Retorna resumen de oportunidades recientes del contacto para el prompt del bot."""
+    opps = (
+        db.query(Opportunity)
+        .options(joinedload(Opportunity.stage), joinedload(Opportunity.pipeline))
+        .filter(
+            Opportunity.contact_id == contact.id,
+            Opportunity.deleted_at == None,
+        )
+        .order_by(Opportunity.created_at.desc())
+        .limit(3)
+        .all()
+    )
+    if not opps:
+        return "Cliente nuevo, sin historial previo en el CRM."
+    lineas = []
+    for opp in opps:
+        pipeline_name = opp.pipeline.name if opp.pipeline else "?"
+        stage_name    = opp.stage.name    if opp.stage    else "?"
+        fecha         = opp.created_at.strftime("%d/%m/%Y")
+        lineas.append(f"- {pipeline_name}: etapa '{stage_name}', estado {opp.status.value}, desde {fecha}")
+    return "Cliente existente. Historial reciente:\n" + "\n".join(lineas)
 

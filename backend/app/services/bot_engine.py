@@ -149,6 +149,7 @@ async def _process_debounced(db: Session, conv_id) -> None:
     combined = "\n".join(pending)   # todos los fragmentos juntos como un mensaje
     info     = get_business_info(db)
     biz_ctx  = bot_responder.build_business_context(info)
+    cust_hist = db_h.build_customer_history_context(db, conv.contact)
     history  = db_h.build_history_before(db, conv_id)
 
     result = await ai_classifier_service.classify(
@@ -156,5 +157,6 @@ async def _process_debounced(db: Session, conv_id) -> None:
         recent_history=history,
         business_context=biz_ctx,
         collected_data=dict(context.collected_data or {}),
+        customer_history=cust_hist,
     )
     await bot_responder.handle_result(result, conv.channel_identifier, conv.contact, conv, context, db)

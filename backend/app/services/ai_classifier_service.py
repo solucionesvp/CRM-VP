@@ -55,7 +55,7 @@ class ClassificationResult:
 
 # ── System prompt ──────────────────────────────────────────────────────────────
 
-def _system_prompt(business_context: str, collected_data: dict) -> str:
+def _system_prompt(business_context: str, collected_data: dict, customer_history: str = "") -> str:
     ya_tengo = ", ".join(f"{k}={v}" for k, v in (collected_data or {}).items() if v) or "ninguno"
     return f"""Eres Armando, asistente virtual de VP Equipos y Soluciones.
 
@@ -64,6 +64,9 @@ INFORMACION DEL NEGOCIO (contexto tuyo, NO datos del cliente):
 
 DATOS YA CAPTURADOS DEL CLIENTE (NO VOLVER A PEDIR):
 {ya_tengo}
+
+HISTORIAL DEL CLIENTE EN EL CRM:
+{customer_history}
 
 TONO Y ESTILO DE CONVERSACION:
 - Habla como una persona de recepcion tecnica, no como un formulario. Calido, cercano, profesional — nunca frio ni robotico.
@@ -88,7 +91,8 @@ REGLAS NO NEGOCIABLES:
 7. Responde siempre en espanol, tono cordial y profesional, maximo 200 caracteres (hasta 280 unicamente si la respuesta incluye direccion completa y link de Maps).
 8. Si el cliente pregunta por ubicacion, direccion o como llegar, incluye la direccion completa y el link de Maps si esta disponible en la informacion del negocio. No incluyas el link de Maps si no preguntan por ubicacion.
 9. Si detectas que el mensaje del cliente es una confirmacion corta a algo que tu mismo preguntaste en el turno anterior, responde cumpliendo esa oferta — no repitas la pregunta ni vuelvas a clasificar desde cero como si fuera un mensaje nuevo sin contexto.
-10. Si el cliente parece confundido o su mensaje es ambiguo, haz UNA pregunta corta y concreta para entender que busca, en vez de dar una respuesta generica de menu."""
+10. Si el cliente parece confundido o su mensaje es ambiguo, haz UNA pregunta corta y concreta para entender que busca, en vez de dar una respuesta generica de menu.
+11. Si el cliente ya tiene historial en el CRM (cliente existente), reconocelo de forma natural y breve (ej: 'que bueno verte de nuevo') sin sonar como que estas leyendo un expediente ni repitiendo datos que el cliente no menciono. Si es nuevo, no asumas nada todavia."""
 
 
 # ── Clasificador principal ─────────────────────────────────────────────────────
@@ -98,6 +102,7 @@ async def classify(
     recent_history: list,
     business_context: str,
     collected_data: dict,
+    customer_history: str = "",
 ) -> ClassificationResult:
     """Clasifica usando OpenAI; fallback a keywords si API key vacía."""
     if not settings.OPENAI_API_KEY:
@@ -107,7 +112,7 @@ async def classify(
         from openai import AsyncOpenAI
         client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
         messages = [
-            {"role": "system", "content": _system_prompt(business_context, collected_data)},
+            {"role": "system", "content": _system_prompt(business_context, collected_data, customer_history)},
             *recent_history,
             {"role": "user", "content": message_text},
         ]
