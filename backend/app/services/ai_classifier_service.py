@@ -24,7 +24,7 @@ _HUMAN_KW   = {"humano", "persona", "asesor", "agente", "quiero hablar", "hablar
 _CLASSIFY_TOOL = {"type": "function", "function": {
     "name": "classify",
     "description": "Clasifica el mensaje del cliente y extrae datos que el CLIENTE mencione explicitamente.",
-    "parameters": {"type": "object", "required": ["intent", "confidence", "should_escalate", "suggested_response"], "properties": {
+    "parameters": {"type": "object", "required": ["intent", "confidence", "should_escalate", "suggested_response", "calificacion"], "properties": {
         "intent":            {"type": "string", "enum": ["greeting", "sales", "service", "parts", "admin", "escalate_human", "unknown"]},
         "confidence":        {"type": "number", "description": "0.0-1.0"},
         "extracted":         {"type": "object",
@@ -38,6 +38,8 @@ _CLASSIFY_TOOL = {"type": "function", "function": {
         "escalate_dept_slug":{"type": "string", "description": "slug del departamento al que escalar si should_escalate=true"},
         "suggested_response":{"type": "string", "description": "respuesta al cliente en espanol, max 200 chars"},
         "handoff_summary":   {"type": "string", "description": "resumen breve para el agente humano si hay escalamiento"},
+        "calificacion":      {"type": "string", "enum": ["curioso", "caliente", "urgente", "problema", "cliente_existente", "no_apto"],
+                              "description": "Calificacion del cliente segun su comportamiento en este mensaje. Ver reglas del system prompt para definiciones y prioridad."},
     }},
 }}
 
@@ -51,6 +53,7 @@ class ClassificationResult:
     escalate_dept_slug: Optional[str] = None
     suggested_response: Optional[str] = None
     handoff_summary: Optional[str] = None
+    calificacion: str = "curioso"
 
 
 # ── System prompt ──────────────────────────────────────────────────────────────
@@ -67,6 +70,17 @@ DATOS YA CAPTURADOS DEL CLIENTE (NO VOLVER A PEDIR):
 
 HISTORIAL DEL CLIENTE EN EL CRM:
 {customer_history}
+
+CALIFICACION DEL CLIENTE (campo obligatorio, NO es lo mismo que la intencion):
+- curioso: pregunta sin intencion clara de comprar o agendar.
+- caliente: pide precio, disponibilidad o quiere agendar.
+- urgente: expresa que lo necesita ya, hoy, o usa palabras como "urge"/"urgente".
+- problema: se queja, reclama o esta molesto.
+- cliente_existente: el HISTORIAL DEL CLIENTE EN EL CRM indica que ya tiene compras u oportunidades previas. NUNCA le preguntes al cliente si ya es cliente — usa el historial que ya tienes, no la conversacion actual.
+- no_apto: busca algo que VP no maneja (fuera de las areas de servicio listadas).
+
+Si aplica mas de una senal a la vez, usa esta prioridad:
+problema > urgente > cliente_existente > caliente > no_apto > curioso.
 
 TONO Y ESTILO DE CONVERSACION:
 - Habla como una persona de recepcion tecnica, no como un formulario. Calido, cercano, profesional — nunca frio ni robotico.
@@ -134,6 +148,7 @@ async def classify(
             escalate_dept_slug=args.get("escalate_dept_slug"),
             suggested_response=args.get("suggested_response"),
             handoff_summary=args.get("handoff_summary"),
+            calificacion=args.get("calificacion", "curioso"),
         )
     except Exception as exc:
         logger.error(f"OpenAI classify error: {exc}", exc_info=True)

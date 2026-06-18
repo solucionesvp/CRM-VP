@@ -201,4 +201,5 @@ async def handle_result(
     context.current_intent  = result.intent
     context.current_flow    = INTENT_TO_DEPT.get(result.intent, result.intent)
     context.last_bot_action = f"ai_response_{result.intent}"
+    context.collected_data  = {**dict(context.collected_data or {}), "calificacion": result.calificacion}
     db.commit()
