@@ -150,6 +150,7 @@ async def _process_debounced(db: Session, conv_id) -> None:
     info     = get_business_info(db)
     biz_ctx  = bot_responder.build_business_context(info)
     cust_hist = db_h.build_customer_history_context(db, conv.contact)
+    stage_ctx  = db_h.get_opportunity_stage_context(db, conv)
     history  = db_h.build_history_before(db, conv_id)
 
     collected = dict(context.collected_data or {})
@@ -163,4 +164,4 @@ async def _process_debounced(db: Session, conv_id) -> None:
         collected_data=collected,
         customer_history=cust_hist,
     )
-    await bot_responder.handle_result(result, conv.channel_identifier, conv.contact, conv, context, db)
+    await bot_responder.handle_result(result, conv.channel_identifier, conv.contact, conv, context, db, stage_context=stage_ctx)

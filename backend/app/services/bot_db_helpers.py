@@ -11,6 +11,7 @@ from app.models.conversation import Conversation
 from app.models.conversation_context import ConversationContext
 from app.models.message import Message
 from app.models.opportunity import Opportunity
+from app.models.opportunity_stage import OpportunityStage
 from app.models.enums import (
     ConversationChannel, ConversationStatus,
     MessageDirection, MessageSenderType, MessageType, MessageStatus,
@@ -177,3 +178,45 @@ def build_customer_history_context(db: Session, contact: Contact) -> str:
         lineas.append(f"- {pipeline_name}: etapa '{stage_name}', estado {opp.status.value}, desde {fecha}")
     return "Cliente existente. Historial reciente:\n" + "\n".join(lineas)
 
+
+def get_opportunity_stage_context(db: Session, conversation: Conversation):
+    """Retorna el contexto de etapas Kanban para la oportunidad vinculada a la conversación.
+
+    Devuelve None si la conversación no tiene oportunidad asociada, si la oportunidad
+    fue eliminada (soft-delete), o si no hay etapas activas en su pipeline.
+    """
+    if conversation.opportunity_id is None:
+        return None
+
+    opp = (
+        db.query(Opportunity)
+        .options(joinedload(Opportunity.stage), joinedload(Opportunity.pipeline))
+        .filter(
+            Opportunity.id == conversation.opportunity_id,
+            Opportunity.deleted_at.is_(None),
+        )
+        .first()
+    )
+    if not opp:
+        return None
+
+    stages = (
+        db.query(OpportunityStage)
+        .filter(
+            OpportunityStage.pipeline_id == opp.pipeline_id,
+            OpportunityStage.is_active.is_(True),
+        )
+        .order_by(OpportunityStage.order.asc())
+        .all()
+    )
+
+    return {
+        "opp_id":              opp.id,
+        "pipeline_id":         opp.pipeline_id,
+        "current_stage_id":    opp.stage_id,
+        "current_stage_order": opp.stage.order,
+        "stages": [
+            {"id": s.id, "order": s.order, "is_won": s.is_won, "is_lost": s.is_lost}
+            for s in stages
+        ],
+    }

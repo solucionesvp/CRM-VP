@@ -15,6 +15,7 @@ from app.models.message import Message
 from app.models.enums import MessageDirection, MessageSenderType, MessageType, MessageStatus
 from app.services import whatsapp_service, department_agent_service
 from app.services.ai_classifier_service import ClassificationResult
+from app.services import opportunity_service
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,11 @@ INTENT_TO_DEPT = {
     "followup":    "atencion_cliente",
 }
 DEFAULT_DEPT = "atencion_cliente"   # fallback obligatorio para todo lo no mapeado
+
+# Intents que indican engagement real — disparan avance de etapa
+STAGE_ADVANCE_INTENTS = {
+    "sales", "service", "parts", "quotation", "appointment", "followup"
+}
 
 ESCALATION_MSG = (
     "Para darte una respuesta precisa, voy a pasar tu caso con una persona del equipo. "
@@ -161,6 +167,49 @@ def _merge_collected(context: ConversationContext, extracted: dict, db: Session)
         db.commit()
 
 
+def _try_advance_stage(db: Session, stage_context: Optional[dict], intent: str) -> None:
+    """Avanza la oportunidad a la siguiente etapa del pipeline si el intent lo justifica.
+
+    Reglas:
+    - Sin contexto de oportunidad → no hace nada.
+    - Intent fuera de STAGE_ADVANCE_INTENTS → no hace nada.
+    - No existe etapa siguiente → ya está en la última, no hace nada.
+    - Siguiente etapa es won o lost → requiere humano, no hace nada.
+    - Cualquier excepción → logger.warning, nunca rompe el flujo del cliente.
+    """
+    if stage_context is None:
+        return
+    if intent not in STAGE_ADVANCE_INTENTS:
+        return
+
+    current_order = stage_context["current_stage_order"]
+    next_stage = next(
+        (s for s in stage_context["stages"] if s["order"] > current_order),
+        None,
+    )
+    if next_stage is None:
+        return
+    if next_stage["is_won"] or next_stage["is_lost"]:
+        return
+
+    try:
+        opportunity_service.change_stage(
+            db,
+            stage_context["opp_id"],
+            next_stage["id"],
+            user_id=None,
+            description="Avance automático por bot",
+        )
+        logger.info(
+            f"Kanban: oportunidad {stage_context['opp_id']} avanzada a etapa "
+            f"{next_stage['id']} (order={next_stage['order']}) por intent='{intent}'"
+        )
+    except Exception as exc:
+        logger.warning(
+            f"Kanban: no se pudo avanzar oportunidad {stage_context.get('opp_id')} — {exc}"
+        )
+
+
 # ── Dispatcher principal ───────────────────────────────────────────────────────
 
 async def handle_result(
@@ -170,6 +219,7 @@ async def handle_result(
     conversation: Conversation,
     context: ConversationContext,
     db: Session,
+    stage_context: Optional[dict] = None,
 ) -> None:
     """Despacha acción según resultado del clasificador."""
 
@@ -193,6 +243,7 @@ async def handle_result(
         await whatsapp_service.send_text_message(to=phone, message=ESCALATION_MSG)
         save_bot_message(db, conversation, ESCALATION_MSG)
         do_escalate(db, conversation, context, dept_slug, result.handoff_summary)
+        _try_advance_stage(db, stage_context, result.intent)
         return
 
     # 3. Respuesta normal — usar sugerencia de la IA o menú por defecto
@@ -204,6 +255,7 @@ async def handle_result(
         body = "¡Hola! Soy Armando 😊 ¿En qué te puedo ayudar?"
         await whatsapp_service.send_interactive_message(to=phone, body=body, buttons=MENU_BUTTONS)
         save_bot_message(db, conversation, body)
+    _try_advance_stage(db, stage_context, result.intent)
 
     # 4. Actualizar estado del flujo en contexto
     context.current_intent  = result.intent
