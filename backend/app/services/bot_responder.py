@@ -25,6 +25,10 @@ INTENT_TO_DEPT = {
     "service": "servicio_refacciones",
     "parts":   "servicio_refacciones",
     "admin":   "administracion",
+    "quotation":   "ventas",
+    "appointment": "servicio_refacciones",
+    "complaint":   "atencion_cliente",
+    "followup":    "atencion_cliente",
 }
 DEFAULT_DEPT = "atencion_cliente"   # fallback obligatorio para todo lo no mapeado
 
