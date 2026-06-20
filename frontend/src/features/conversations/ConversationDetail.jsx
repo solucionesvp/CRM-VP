@@ -11,6 +11,8 @@ export default function ConversationDetail({ conversation, departments, onUpdate
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
   const pollRef = useRef(null);
+  const isAtBottomRef = useRef(true);
+  const messagesAreaRef = useRef(null);
 
   const loadMessages = async () => {
     if (!conversation?.id) return;
@@ -22,6 +24,7 @@ export default function ConversationDetail({ conversation, departments, onUpdate
 
   useEffect(() => {
     if (!conversation?.id) { setMessages([]); return; }
+    isAtBottomRef.current = true;
     setLoading(true);
     loadMessages().finally(() => setLoading(false));
 
@@ -32,7 +35,9 @@ export default function ConversationDetail({ conversation, departments, onUpdate
 
   // Auto-scroll
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   const handleSend = async (text) => {
@@ -80,7 +85,16 @@ export default function ConversationDetail({ conversation, departments, onUpdate
       />
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div
+        ref={messagesAreaRef}
+        onScroll={() => {
+          const el = messagesAreaRef.current;
+          if (!el) return;
+          const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+          isAtBottomRef.current = distanceFromBottom < 80;
+        }}
+        className="flex-1 overflow-y-auto px-6 py-4"
+      >
         {loading && messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-6 h-6 border-2 border-[#FC6621] border-t-transparent rounded-full animate-spin" />

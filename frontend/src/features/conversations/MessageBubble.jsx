@@ -66,6 +66,9 @@ export default function MessageBubble({ message }) {
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${bubbleClass}`}>
           {(() => {
             const type = message.message_type?.toLowerCase();
+            const content = message.content || '';
+            
+            // Medios reales por message_type
             if (type === 'image') return (
               <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
                 📷 Imagen recibida por WhatsApp
@@ -86,8 +89,17 @@ export default function MessageBubble({ message }) {
                 📄 Documento recibido por WhatsApp
               </span>
             );
-            return message.content || (
-              <span className="italic text-gray-400 text-xs">Mensaje no textual</span>
+            
+            // Medios guardados como system con content=[media]
+            if (type === 'system' && content === '[media]') return (
+              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
+                📎 Archivo multimedia (foto, audio o video)
+              </span>
+            );
+            
+            // Texto normal
+            return content || (
+              <span className="italic text-gray-400 text-xs">Mensaje vacío</span>
             );
           })()}
         </div>
