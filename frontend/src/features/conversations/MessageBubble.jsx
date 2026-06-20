@@ -4,8 +4,10 @@ import { Bot, User } from 'lucide-react';
 
 function formatTime(dateStr) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
-  return format(d, 'HH:mm');
+  const normalized = dateStr.endsWith('Z') || dateStr.includes('+')
+    ? dateStr
+    : dateStr + 'Z';
+  return format(new Date(normalized), 'HH:mm');
 }
 
 function formatRelative(dateStr) {
@@ -62,7 +64,32 @@ export default function MessageBubble({ message }) {
           )}
         </div>
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${bubbleClass}`}>
-          {message.content || <span className="italic text-gray-400 text-xs">Mensaje no textual</span>}
+          {(() => {
+            const type = message.message_type?.toLowerCase();
+            if (type === 'image') return (
+              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
+                📷 Imagen recibida por WhatsApp
+              </span>
+            );
+            if (type === 'audio') return (
+              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
+                🎤 Audio recibido por WhatsApp
+              </span>
+            );
+            if (type === 'video') return (
+              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
+                🎥 Video recibido por WhatsApp
+              </span>
+            );
+            if (type === 'document') return (
+              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
+                📄 Documento recibido por WhatsApp
+              </span>
+            );
+            return message.content || (
+              <span className="italic text-gray-400 text-xs">Mensaje no textual</span>
+            );
+          })()}
         </div>
         <span className={`text-[10px] text-gray-400 ${isInbound ? 'text-left' : 'text-right'} mt-0.5`}>
           {formatTime(message.created_at)}

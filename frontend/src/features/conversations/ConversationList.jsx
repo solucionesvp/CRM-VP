@@ -13,7 +13,10 @@ const TABS = [
 function timeAgo(dateStr) {
   if (!dateStr) return '';
   try {
-    return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: es });
+    const normalized = dateStr.endsWith('Z') || dateStr.includes('+') 
+      ? dateStr 
+      : dateStr + 'Z';
+    return formatDistanceToNow(new Date(normalized), { addSuffix: true, locale: es });
   } catch { return ''; }
 }
 
@@ -82,6 +85,11 @@ export default function ConversationList({ conversations, loading, selectedId, o
         c.channel_identifier?.includes(q)
       );
     }
+    list = [...list].sort((a, b) => {
+      const ta = new Date(a.last_message_at || a.created_at || 0);
+      const tb = new Date(b.last_message_at || b.created_at || 0);
+      return tb - ta;
+    });
     return list;
   }, [conversations, tab, search]);
 
