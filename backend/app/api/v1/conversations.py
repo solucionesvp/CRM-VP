@@ -61,8 +61,28 @@ def get_messages(
 
 @router.post("/{conv_id}/messages", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
 async def send_message(conv_id: UUID, body: SendMessageRequest, db: Session = Depends(get_db)):
+    from app.models.conversation import Conversation
+    from app.models.user import User
+
+    conversation = db.query(Conversation).filter(Conversation.id == conv_id).first()
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversación no encontrada")
+
+    signature = "*Equipo VP*"
+    if conversation.assigned_to_user_id:
+        user = db.query(User).filter(User.id == conversation.assigned_to_user_id).first()
+        if user and user.name:
+            first_name = user.name.strip().split(" ")[0]
+            dept = conversation.assigned_department
+            if dept:
+                signature = f"*{first_name} · {dept.replace('_', ' ').title()}*"
+            else:
+                signature = f"*{first_name}*"
+
+    signed_text = f"{signature}\n{body.text}"
+
     try:
-        msg = await conversation_service.send_message(db, conv_id, body.text)
+        msg = await conversation_service.send_message(db, conv_id, signed_text)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return msg

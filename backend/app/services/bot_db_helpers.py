@@ -86,6 +86,8 @@ def save_message(
     )
     db.add(msg)
     conversation.last_message_preview = (content or "")[:100]
+    from datetime import datetime
+    conversation.last_message_at = datetime.utcnow()
     db.commit()
     return msg
 

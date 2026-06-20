@@ -138,6 +138,8 @@ def save_bot_message(db: Session, conversation: Conversation, text: str) -> Mess
     )
     db.add(msg)
     conversation.last_message_preview = text[:100]
+    from datetime import datetime
+    conversation.last_message_at = datetime.utcnow()
     db.commit()
     return msg
 
@@ -337,8 +339,9 @@ async def handle_result(
     # 3. Respuesta normal — usar sugerencia de la IA o menú por defecto
     response = result.suggested_response
     if response:
-        await whatsapp_service.send_text_message(to=phone, message=response)
-        save_bot_message(db, conversation, response)
+        signed = f"*Armando*\n{response}"
+        await whatsapp_service.send_text_message(to=phone, message=signed)
+        save_bot_message(db, conversation, signed)
     else:
         body = "¡Hola! Soy Armando 😊 ¿En qué te puedo ayudar?"
         await whatsapp_service.send_interactive_message(to=phone, body=body, buttons=MENU_BUTTONS)
