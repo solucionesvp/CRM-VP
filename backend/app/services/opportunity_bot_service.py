@@ -9,6 +9,7 @@ Toda excepción queda atrapada con logger.warning para no romper el flujo.
 """
 import json
 import logging
+from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ from app.models.conversation import Conversation
 from app.schemas.opportunity import OpportunityCreate
 from app.services import bot_db_helpers as db_h
 from app.services import opportunity_service
+from app.services.business_info_service import get_business_info
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +82,47 @@ async def _ask_llm_match(producto: str, oportunidades: list) -> dict:
         return {"action": "create"}
 
 
+async def _producto_es_valido(producto: str, areas: list) -> bool:
+    """Verifica si el producto mencionado encaja en las áreas de servicio de la empresa."""
+    if not areas:
+        return True
+
+    if not settings.OPENAI_API_KEY:
+        return True
+
+    prompt = (
+        f"El cliente mencionó que necesita: '{producto}'.\n"
+        f"Las categorías de productos y servicios que maneja la empresa son:\n"
+        f"{', '.join(areas)}\n\n"
+        f"¿El producto o servicio que menciona el cliente encaja razonablemente "
+        f"en alguna de estas categorías? Considera sinónimos y variaciones "
+        f"(ej: 'motor de agua' encaja en 'Bombas de Agua').\n\n"
+        f"Responde SOLO con una palabra: SI o NO."
+    )
+
+    try:
+        from openai import AsyncOpenAI
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        response = await client.chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "Eres un asistente de clasificación del CRM. Tu tarea es responder SI o NO. Nota: 'motor de agua' es un sinónimo común de bomba de agua y encaja en la categoría 'Bombas de Agua'."},
+                {"role": "user", "content": prompt}
+            ],
+            max_completion_tokens=5,
+            temperature=0,
+        )
+        raw = (response.choices[0].message.content or "").strip().upper()
+        if "SI" in raw:
+            return True
+        if "NO" in raw:
+            return False
+        return True
+    except Exception as exc:
+        logger.warning(f"opportunity_bot_service._producto_es_valido falló: {exc}")
+        return True
+
+
 # ── Función principal ──────────────────────────────────────────────────────────
 
 async def decide_and_link_opportunity(
@@ -88,6 +131,7 @@ async def decide_and_link_opportunity(
     contact,
     intent: str,
     collected_data: dict,
+    extracted: Optional[dict] = None,
 ) -> None:
     """Decide si crear oportunidad nueva o reutilizar existente, y vincula a la conversación.
 
@@ -108,8 +152,21 @@ async def decide_and_link_opportunity(
             return
 
         # Guarda 3 — sin producto todavía
-        producto = (collected_data.get("producto") or "").strip()
+        producto = (
+            (extracted or {}).get("producto")
+            or collected_data.get("producto")
+            or ""
+        ).strip()
         if not producto:
+            return
+
+        # Guarda 4 — producto fuera de categorías VP
+        info = get_business_info(db)
+        areas = info.areas_served if info and info.areas_served else []
+        if areas and not await _producto_es_valido(producto, areas):
+            logger.info(
+                f"Oportunidad NO creada — producto '{producto}' fuera de categorías VP"
+            )
             return
 
         pipeline_id = PIPELINE_FOR_INTENT[intent]

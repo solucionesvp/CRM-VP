@@ -247,7 +247,8 @@ async def handle_result(
         _try_advance_stage(db, stage_context, result.intent)
         await opportunity_bot_service.decide_and_link_opportunity(
             db, conversation, contact, result.intent,
-            dict(context.collected_data or {})
+            dict(context.collected_data or {}),
+            extracted=result.extracted,
         )
         return
 
@@ -263,7 +264,8 @@ async def handle_result(
     _try_advance_stage(db, stage_context, result.intent)
     await opportunity_bot_service.decide_and_link_opportunity(
         db, conversation, contact, result.intent,
-        dict(context.collected_data or {})
+        dict(context.collected_data or {}),
+        extracted=result.extracted,
     )
 
     # 4. Actualizar estado del flujo en contexto
