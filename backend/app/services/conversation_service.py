@@ -10,6 +10,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.conversation import Conversation
+from app.models.conversation_context import ConversationContext
 from app.models.message import Message
 from app.models.opportunity import Opportunity
 from app.models.opportunity_stage import OpportunityStage
@@ -132,13 +133,23 @@ async def send_message(
 
 
 def update_conversation(
-    db: Session, conv_id: UUID, data: dict
+    db: Session, conv_id: UUID, updates: dict
 ) -> Optional[Conversation]:
     conv = get_conversation(db, conv_id)
     if not conv:
         return None
-    for field, value in data.items():
-        setattr(conv, field, value)
+    for field, value in updates.items():
+        if field != "reset_handoff":
+            setattr(conv, field, value)
+
+    if updates.get("reset_handoff"):
+        ctx = db.query(ConversationContext).filter(
+            ConversationContext.conversation_id == conv_id
+        ).first()
+        if ctx:
+            ctx.handoff_to_human = False
+            ctx.handoff_reason = None
+
     db.commit()
     db.refresh(conv)
     return conv

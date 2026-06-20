@@ -26,7 +26,9 @@ export default function ConversationHeader({ conversation, departments, onUpdate
 
   const handleToggleBot = async () => {
     try {
-      const updated = await updateConversation(conversation.id, { bot_active: !conversation.bot_active });
+      const payload = { bot_active: !conversation.bot_active };
+      if (!conversation.bot_active) payload.reset_handoff = true;
+      const updated = await updateConversation(conversation.id, payload);
       onUpdate(updated);
     } catch (e) { console.error(e); }
   };

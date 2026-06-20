@@ -72,6 +72,7 @@ class ConversationUpdate(BaseModel):
     assigned_department: Optional[str] = None
     assigned_to_user_id: Optional[UUID] = None
     opportunity_id: Optional[UUID] = None
+    reset_handoff: Optional[bool] = None
 
 
 class ConversationAssign(BaseModel):
