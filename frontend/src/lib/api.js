@@ -347,3 +347,54 @@ export async function connectWhatsApp(phoneNumber) {
   return handleResponse(response, 'Error al conectar con WhatsApp');
 }
 
+// --- Tags API ---
+export async function fetchTags() {
+  const response = await fetch(`${API_BASE_URL}/tags/?include_inactive=true`);
+  return handleResponse(response, 'Error al obtener las etiquetas');
+}
+
+export async function createTag(data) {
+  const response = await fetch(`${API_BASE_URL}/tags/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al crear la etiqueta');
+}
+
+export async function updateTag(id, data) {
+  const response = await fetch(`${API_BASE_URL}/tags/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return handleResponse(response, 'Error al actualizar la etiqueta');
+}
+
+export async function deleteTag(id) {
+  const response = await fetch(`${API_BASE_URL}/tags/${id}`, { method: 'DELETE' });
+  return handleResponse(response, 'Error al desactivar la etiqueta');
+}
+
+export async function fetchContactTags(contactId) {
+  const response = await fetch(`${API_BASE_URL}/tags/contact/${contactId}`);
+  return handleResponse(response, 'Error al obtener las etiquetas del contacto');
+}
+
+export async function assignContactTags(contactId, tagIds, assignedBy = 'agent') {
+  const response = await fetch(`${API_BASE_URL}/tags/contact/${contactId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tag_ids: tagIds, assigned_by: assignedBy }),
+  });
+  return handleResponse(response, 'Error al asignar las etiquetas al contacto');
+}
+
+export async function removeContactTag(contactId, tagId) {
+  const response = await fetch(`${API_BASE_URL}/tags/contact/${contactId}/${tagId}`, {
+    method: 'DELETE',
+  });
+  return handleResponse(response, 'Error al remover la etiqueta del contacto');
+}
+
+

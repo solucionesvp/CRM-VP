@@ -18,6 +18,7 @@ from app.models.conversation_context import ConversationContext
 from app.models.department import Department
 # DepartmentAgent debe importarse después de Department y User
 from app.models.department_agent import DepartmentAgent
+from app.models.tag import Tag, ContactTag
 
 __all__ = [
     "User",
@@ -37,4 +38,6 @@ __all__ = [
     "ConversationContext",
     "Department",
     "DepartmentAgent",
+    "Tag",
+    "ContactTag",
 ]

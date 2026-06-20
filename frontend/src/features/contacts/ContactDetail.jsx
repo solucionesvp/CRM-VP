@@ -7,7 +7,8 @@ import {
 } from 'lucide-react';
 import { 
   updateContact, fetchContactOpportunities, deleteOpportunity, 
-  updateOpportunityStage, fetchStages, fetchContactActivities 
+  updateOpportunityStage, fetchStages, fetchContactActivities,
+  fetchTags, fetchContactTags, assignContactTags, removeContactTag
 } from '../../lib/api';
 import OpportunityList from './OpportunityList';
 import OpportunityForm from './OpportunityForm';
@@ -79,6 +80,11 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
   const [loadingActivities, setLoadingActivities] = useState(false);
   const [activitiesError, setActivitiesError] = useState(null);
 
+  // Tags States
+  const [contactTags, setContactTags] = useState([]);
+  const [allTags, setAllTags] = useState([]);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+
   // Modals States
   const [showAllOpps, setShowAllOpps] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
@@ -127,16 +133,49 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
     }
   };
 
+  const loadContactTags = async (contactId) => {
+    try {
+      const tagsData = await fetchContactTags(contactId);
+      setContactTags(tagsData || []);
+    } catch (err) {
+      console.error('Error al cargar etiquetas del contacto:', err);
+    }
+  };
+
+  const handleAssignTag = async (tagId) => {
+    const updatedTagIds = [...contactTags.map(t => t.id), tagId];
+    try {
+      const updatedTags = await assignContactTags(contact.id, updatedTagIds);
+      setContactTags(updatedTags);
+      setShowTagDropdown(false);
+      loadActivities(contact.id);
+    } catch (err) {
+      alert('Error al asignar etiqueta: ' + err.message);
+    }
+  };
+
+  const handleRemoveTag = async (tagId) => {
+    try {
+      await removeContactTag(contact.id, tagId);
+      setContactTags(prev => prev.filter(t => t.id !== tagId));
+      loadActivities(contact.id);
+    } catch (err) {
+      alert('Error al quitar la etiqueta: ' + err.message);
+    }
+  };
+
   // Reload everything when contact changes
   useEffect(() => {
     setNotes(contact?.notes || '');
     setShowAddForm(false);
     setActiveTab('resumen');
     setActiveStagePickerOppId(null);
+    setShowTagDropdown(false);
     if (contact) {
       loadOpportunities(contact.id);
       loadTasks(contact.id);
       loadActivities(contact.id);
+      loadContactTags(contact.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contact]);
@@ -151,7 +190,16 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
         console.error('Error al cargar etapas en detalle:', err);
       }
     }
+    async function loadAllTagsList() {
+      try {
+        const tagsData = await fetchTags();
+        setAllTags(tagsData);
+      } catch (err) {
+        console.error('Error al cargar etiquetas:', err);
+      }
+    }
     loadStages();
+    loadAllTagsList();
   }, []);
 
   const handleSaveNotes = async () => {
@@ -345,18 +393,79 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
         </div>
 
         {/* Tags and Primary Interest */}
-        <div className="flex flex-wrap items-center gap-1 pt-2 border-t border-border/50">
+        <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-border/50">
           <span className="text-[9px] text-textMuted font-bold uppercase tracking-wider mr-1">Interés/Etiquetas:</span>
           {contact.primary_interest && (
             <span className="bg-orange-50 text-primary border border-orange-200/50 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">
               {contact.primary_interest}
             </span>
           )}
-          {contact.tags && contact.tags.map((tag, i) => (
-            <span key={i} className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase">
-              {tag}
-            </span>
-          ))}
+          
+          {contactTags.length === 0 ? (
+            <span className="text-[10px] text-gray-400 font-semibold italic mr-1">Sin etiquetas</span>
+          ) : (
+            contactTags.map(tag => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center gap-1 border px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider relative group"
+                style={{
+                  backgroundColor: tag.color + '12',
+                  color: tag.color,
+                  borderColor: tag.color + '30',
+                }}
+              >
+                <span className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
+                {tag.label}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveTag(tag.id); }}
+                  className="ml-1 text-current hover:opacity-100 opacity-60 transition-opacity font-extrabold focus:outline-none"
+                  title="Eliminar"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            ))
+          )}
+
+          <div className="relative inline-block ml-1">
+            <button
+              type="button"
+              onClick={() => setShowTagDropdown(!showTagDropdown)}
+              className="inline-flex items-center justify-center w-5 h-5 rounded-full border border-border bg-white text-textMuted hover:text-text hover:bg-gray-50 transition-colors"
+              title="Agregar etiqueta"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+            
+            {showTagDropdown && (
+              <div className="absolute left-0 mt-1 w-48 bg-white border border-border rounded-lg shadow-lg py-1 z-10 max-h-48 overflow-y-auto">
+                <div className="flex items-center justify-between px-2 py-1 border-b border-border bg-gray-50/50">
+                  <span className="text-[9px] font-bold text-textMuted uppercase">Etiquetas disponibles</span>
+                  <button type="button" onClick={() => setShowTagDropdown(false)}>
+                    <X className="w-2.5 h-2.5 text-textMuted hover:text-text" />
+                  </button>
+                </div>
+                {allTags.filter(t => t.is_active && !contactTags.some(ct => ct.id === t.id)).length === 0 ? (
+                  <p className="text-[10px] text-textMuted italic p-2 text-center">No hay etiquetas para agregar</p>
+                ) : (
+                  allTags
+                    .filter(t => t.is_active && !contactTags.some(ct => ct.id === t.id))
+                    .map(t => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => handleAssignTag(t.id)}
+                        className="w-full text-left px-2.5 py-1.5 text-[10px] font-bold uppercase hover:bg-gray-50 flex items-center gap-2 border-b border-border/20 last:border-0"
+                      >
+                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                        <span className="truncate flex-1" style={{ color: t.color }}>{t.label}</span>
+                      </button>
+                    ))
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

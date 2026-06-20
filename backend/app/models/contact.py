@@ -61,6 +61,7 @@ class Contact(Base):
 
     opportunities  = relationship("Opportunity",  back_populates="contact")
     conversations  = relationship("Conversation",  back_populates="contact")
+    tags_rel       = relationship("Tag", secondary="contact_tags", back_populates="contacts")
 
     @property
     def opportunities_count(self) -> int:

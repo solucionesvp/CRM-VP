@@ -83,6 +83,9 @@ app.include_router(conversations_router.router, prefix="/api/v1")
 from app.api.v1 import departments as departments_router
 app.include_router(departments_router.router, prefix="/api/v1")
 
+from app.api.v1 import tags as tags_router
+app.include_router(tags_router.router, prefix="/api/v1")
+
 from app.api.v1 import whatsapp as whatsapp_router
 app.include_router(whatsapp_router.router, prefix="/api/v1")
 
