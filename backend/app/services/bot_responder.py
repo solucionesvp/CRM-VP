@@ -17,6 +17,7 @@ from app.services import whatsapp_service, department_agent_service
 from app.services.ai_classifier_service import ClassificationResult
 from app.services import opportunity_service
 from app.services import opportunity_bot_service
+from app.services import tag_service
 
 logger = logging.getLogger(__name__)
 
@@ -211,6 +212,82 @@ def _try_advance_stage(db: Session, stage_context: Optional[dict], intent: str) 
         )
 
 
+def _try_assign_tags(
+    db: Session,
+    contact,
+    intent: str,
+    collected_data: dict,
+    calificacion: Optional[str],
+) -> None:
+    try:
+        active_tags = tag_service.list_tags(db)
+        if not active_tags:
+            return
+
+        current_tags = tag_service.get_contact_tags(db, contact.id)
+        current_names = {t.name for t in current_tags}
+
+        tags_a_agregar = []
+
+        for tag in active_tags:
+            # Rule CALIFICACIÓN
+            if calificacion == "urgente" and tag.name == "urgente":
+                tags_a_agregar.append(tag)
+                continue
+            if calificacion == "caliente" and tag.name in ("caliente", "prospecto_caliente"):
+                tags_a_agregar.append(tag)
+                continue
+            if calificacion == "problema" and tag.name in ("problema", "queja"):
+                tags_a_agregar.append(tag)
+                continue
+            if calificacion == "no_apto" and tag.name == "no_apto":
+                tags_a_agregar.append(tag)
+                continue
+            if calificacion == "cliente_existente" and tag.name in ("cliente_existente", "cliente_recurrente"):
+                tags_a_agregar.append(tag)
+                continue
+
+            # Rule PRODUCTO
+            producto = (collected_data.get("producto") or "").lower()
+            if producto:
+                if tag.name in producto or producto in tag.name:
+                    tags_a_agregar.append(tag)
+                    continue
+
+            # Rule INTENT
+            if intent == "complaint" and tag.name == "queja":
+                tags_a_agregar.append(tag)
+                continue
+            if intent == "followup" and tag.name == "seguimiento":
+                tags_a_agregar.append(tag)
+                continue
+
+        # Filter out already assigned tags
+        new_tags = [t for t in tags_a_agregar if t.name not in current_names]
+        if not new_tags:
+            return
+
+        # De-duplicate new tags
+        new_tags_unique = []
+        seen = set()
+        for t in new_tags:
+            if t.id not in seen:
+                seen.add(t.id)
+                new_tags_unique.append(t)
+
+        if not new_tags_unique:
+            return
+
+        # Construct new complete list
+        all_new_ids = [t.id for t in current_tags] + [t.id for t in new_tags_unique]
+        tag_service.assign_tags(db, contact.id, all_new_ids, assigned_by="bot")
+
+        logger.info(f"Tags asignados por bot a {contact.id}: {[t.name for t in new_tags_unique]}")
+
+    except Exception as exc:
+        logger.warning(f"Error en _try_assign_tags para el contacto {contact.id if contact else 'unknown'}: {exc}")
+
+
 # ── Dispatcher principal ───────────────────────────────────────────────────────
 
 async def handle_result(
@@ -250,6 +327,11 @@ async def handle_result(
             dict(context.collected_data or {}),
             extracted=result.extracted,
         )
+        _try_assign_tags(
+            db, contact, result.intent,
+            dict(context.collected_data or {}),
+            result.calificacion,
+        )
         return
 
     # 3. Respuesta normal — usar sugerencia de la IA o menú por defecto
@@ -266,6 +348,11 @@ async def handle_result(
         db, conversation, contact, result.intent,
         dict(context.collected_data or {}),
         extracted=result.extracted,
+    )
+    _try_assign_tags(
+        db, contact, result.intent,
+        dict(context.collected_data or {}),
+        result.calificacion,
     )
 
     # 4. Actualizar estado del flujo en contexto

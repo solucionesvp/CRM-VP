@@ -129,3 +129,11 @@ def remove_tag_from_contact(db: Session, contact_id: UUID, tag_id: UUID) -> bool
     db.delete(link)
     db.commit()
     return True
+
+
+def get_tags_by_ids(db: Session, tag_ids: List[UUID]) -> List[Tag]:
+    """Retorna tags por lista de IDs — para logging en bot."""
+    if not tag_ids:
+        return []
+    return db.query(Tag).filter(Tag.id.in_(tag_ids)).all()
+

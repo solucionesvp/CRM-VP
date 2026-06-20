@@ -259,7 +259,7 @@ export async function fetchConversationById(id) {
   return handleResponse(response, 'Error al obtener conversación');
 }
 
-export async function fetchConversationMessages(id, page = 1, size = 100) {
+export async function fetchConversationMessages(id, page = 1, size = 200) {
   const response = await fetch(`${API_BASE_URL}/conversations/${id}/messages?page=${page}&size=${size}`);
   return handleResponse(response, 'Error al obtener mensajes');
 }
