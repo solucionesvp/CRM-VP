@@ -106,7 +106,21 @@ async def _producto_es_valido(producto: str, areas: list) -> bool:
         response = await client.chat.completions.create(
             model=settings.OPENAI_MODEL,
             messages=[
-                {"role": "system", "content": "Eres un asistente de clasificación del CRM. Tu tarea es responder SI o NO. Nota: 'motor de agua' es un sinónimo común de bomba de agua y encaja en la categoría 'Bombas de Agua'."},
+                {"role": "system", "content": (
+                    "Eres un asistente de clasificación para el CRM de una empresa distribuidora "
+                    "de equipos industriales en México. Tu tarea es responder SOLO con SI o NO. "
+                    "Sé permisivo: si el producto menciona parcialmente o se relaciona con alguna "
+                    "categoría, responde SI. Ejemplos de coincidencias válidas: "
+                    "'bomba' → 'Bombas de Agua', "
+                    "'motor de agua' → 'Bombas de Agua', "
+                    "'motobomba' → 'Bombas de Agua', "
+                    "'hidroneumático' → 'Equipos Hidroneumáticos', "
+                    "'planta de luz' → 'Generadores', "
+                    "'compresor de aire' → 'Compresores', "
+                    "'refacción' → 'Refacciones Originales', "
+                    "'reparación' → 'Taller de Servicio'. "
+                    "Ante la duda, responde SI."
+                )},
                 {"role": "user", "content": prompt}
             ],
             max_completion_tokens=5,
