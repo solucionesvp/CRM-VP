@@ -10,7 +10,7 @@ import KanbanBoard from './features/kanban/KanbanBoard';
 import SettingsPage from './features/settings/SettingsPage';
 import TaskList from './features/tasks/TaskList';
 import Dashboard from './features/dashboard/Dashboard';
-import { fetchContacts, fetchContactById, deleteContact } from './lib/api';
+import { fetchContacts, fetchContactById, deleteContact, fetchTags } from './lib/api';
 import ConversationsPage from './features/conversations/ConversationsPage';
 
 import { Plus } from 'lucide-react';
@@ -27,6 +27,10 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Tags states
+  const [tags, setTags] = useState([]);
+  const [selectedTag, setSelectedTag] = useState(null);
+
   // Selected contact details
   const [selectedId, setSelectedId] = useState(null);
   const [selectedContact, setSelectedContact] = useState(null);
@@ -39,7 +43,7 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchContacts({ page, size, q });
+      const data = await fetchContacts({ page, size, q, tag: selectedTag });
       setContacts(data.items);
       setTotal(data.total);
     } catch (err) {
@@ -61,7 +65,20 @@ function App() {
 
   useEffect(() => {
     loadContacts();
-  }, [page, q]);
+  }, [page, q, selectedTag]);
+
+  // Load tags catalogue once
+  useEffect(() => {
+    const loadTags = async () => {
+      try {
+        const data = await fetchTags();
+        setTags(data);
+      } catch (err) {
+        console.error('Error al cargar etiquetas:', err);
+      }
+    };
+    loadTags();
+  }, []);
 
   useEffect(() => {
     if (selectedId) {
@@ -84,6 +101,11 @@ function App() {
     if (formMode === 'create') {
       setFormMode('view');
     }
+  };
+
+  const handleTagFilter = (tagName) => {
+    setSelectedTag(tagName);
+    setPage(1); // Reset to first page on tag filter change
   };
 
   const handleContactDelete = async (id) => {
@@ -174,6 +196,9 @@ function App() {
               onDelete={handleContactDelete}
               onPageChange={setPage}
               onRetry={loadContacts}
+              tags={tags}
+              selectedTag={selectedTag}
+              onTagFilter={handleTagFilter}
             />
           </div>
 

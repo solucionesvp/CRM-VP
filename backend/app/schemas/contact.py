@@ -43,6 +43,14 @@ class ContactNextTaskSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class TagInContact(BaseModel):
+    id: UUID
+    name: str
+    label: str
+    color: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class ContactResponse(ContactBase):
     id: UUID
     is_active: bool
@@ -55,6 +63,7 @@ class ContactResponse(ContactBase):
     has_open_opportunities: bool = False
     primary_interest: Optional[str] = None
     next_task: Optional[ContactNextTaskSchema] = None
+    tags_rel: List[TagInContact] = []
 
     model_config = ConfigDict(from_attributes=True)
 

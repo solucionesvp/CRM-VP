@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from typing import List
+from typing import List, Optional
 from app.schemas.contact import (
     ContactCreate,
     ContactUpdate,
@@ -26,10 +26,11 @@ def list_contacts(
     page: int = 1,
     size: int = 20,
     q: str = None,
+    tag: Optional[str] = None,
     assigned_to: UUID = None,
     db: Session = Depends(get_db),
 ):
-    items, total = contact_service.list_contacts(db, page, size, q, assigned_to)
+    items, total = contact_service.list_contacts(db, page, size, q, assigned_to, tag)
     return ContactListResponse(items=items, total=total, page=page, size=size)
 
 

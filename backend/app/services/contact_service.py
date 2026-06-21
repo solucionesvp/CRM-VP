@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.models.contact import Contact
 from app.schemas.contact import ContactCreate, ContactUpdate
+from app.models.tag import Tag, ContactTag
 
 
 def _utcnow() -> datetime:
@@ -27,12 +28,14 @@ def list_contacts(
     size: int,
     q: Optional[str] = None,
     assigned_to: Optional[UUID] = None,
+    tag: Optional[str] = None,
 ) -> tuple[list[Contact], int]:
     query = (
         db.query(Contact)
         .options(
             selectinload(Contact.opportunities),
             selectinload(Contact.tasks),
+            selectinload(Contact.tags_rel),
         )
         .filter(Contact.deleted_at.is_(None))
     )
@@ -48,6 +51,12 @@ def list_contacts(
         )
     if assigned_to:
         query = query.filter(Contact.assigned_to == assigned_to)
+    if tag:
+        query = (
+            query.join(ContactTag, ContactTag.contact_id == Contact.id)
+            .join(Tag, Tag.id == ContactTag.tag_id)
+            .filter(Tag.name == tag, Tag.is_active == True)
+        )
 
     total = query.count()
     items = query.offset((page - 1) * size).limit(size).all()

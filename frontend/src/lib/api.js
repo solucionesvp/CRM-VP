@@ -21,12 +21,13 @@ async function handleResponse(response, defaultMsg) {
 }
 
 // --- Contacts API ---
-export async function fetchContacts({ page = 1, size = 10, q = '', assigned_to = '' } = {}) {
+export async function fetchContacts({ page = 1, size = 10, q = '', assigned_to = '', tag = '' } = {}) {
   const params = new URLSearchParams();
   params.append('page', page.toString());
   params.append('size', size.toString());
   if (q) params.append('q', q);
   if (assigned_to) params.append('assigned_to', assigned_to);
+  if (tag) params.append('tag', tag);
 
   const response = await fetch(`${API_BASE_URL}/contacts/?${params.toString()}`);
   return handleResponse(response, 'Error al obtener la lista de contactos');
