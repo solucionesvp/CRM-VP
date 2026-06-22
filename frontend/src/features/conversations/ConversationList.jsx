@@ -51,6 +51,30 @@ function ConversationItem({ conv, isSelected, onClick, departments }) {
           <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(conv.last_message_at || conv.created_at)}</span>
         </div>
         <p className="text-xs text-gray-500 truncate">{conv.last_message_preview || 'Sin mensajes'}</p>
+        {/* Tags del contacto */}
+        {conv.contact?.tags_rel && conv.contact.tags_rel.length > 0 && (
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            {conv.contact.tags_rel.slice(0, 2).map(tag => (
+              <span
+                key={tag.id}
+                style={{
+                  backgroundColor: tag.color + '18',
+                  borderColor: tag.color + '50',
+                  color: tag.color,
+                }}
+                className="text-[9px] font-bold px-1.5 py-0.5 rounded border 
+                           uppercase tracking-wider leading-none"
+              >
+                {tag.label}
+              </span>
+            ))}
+            {conv.contact.tags_rel.length > 2 && (
+              <span className="text-[9px] text-gray-400 font-semibold">
+                +{conv.contact.tags_rel.length - 2}
+              </span>
+            )}
+          </div>
+        )}
         <div className="flex items-center gap-2 mt-1">
           {dept && (
             <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: dept.color + '20', color: dept.color }}>

@@ -7,13 +7,14 @@ from typing import Optional, List
 from uuid import UUID
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.conversation import Conversation
 from app.models.conversation_context import ConversationContext
 from app.models.message import Message
 from app.models.opportunity import Opportunity
 from app.models.opportunity_stage import OpportunityStage
+from app.models.contact import Contact
 from app.models.enums import (
     MessageDirection, MessageSenderType, MessageType, MessageStatus,
     OpportunityStatus,
@@ -41,7 +42,10 @@ def list_conversations(
 ) -> tuple[List[Conversation], int]:
     q = (
         db.query(Conversation)
-        .options(joinedload(Conversation.contact), joinedload(Conversation.opportunity))
+        .options(
+            joinedload(Conversation.contact).selectinload(Contact.tags_rel),
+            joinedload(Conversation.opportunity),
+        )
         .order_by(Conversation.last_message_at.desc().nullslast(), Conversation.created_at.desc())
     )
     if status:

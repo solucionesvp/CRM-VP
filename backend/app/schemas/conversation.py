@@ -4,11 +4,20 @@ from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, ConfigDict
 
 
+class TagBrief(BaseModel):
+    id: UUID
+    name: str
+    label: str
+    color: str
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ContactBrief(BaseModel):
     id: UUID
     name: str
     phone: Optional[str] = None
     whatsapp: Optional[str] = None
+    tags_rel: List[TagBrief] = []
     model_config = ConfigDict(from_attributes=True)
 
 
