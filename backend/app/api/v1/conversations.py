@@ -103,6 +103,7 @@ async def send_media(
     Acepta multipart/form-data con campos: file (requerido), caption (opcional).
     """
     from app.models.conversation import Conversation
+    from app.models.user import User
 
     # 1. Cargar conversación
     conversation = db.query(Conversation).filter(Conversation.id == conv_id).first()
@@ -146,13 +147,25 @@ async def send_media(
         )
 
     # 7. Enviar por WhatsApp
+    signature = "*Equipo VP*"
+    if conversation.assigned_to_user_id:
+        user = db.query(User).filter(User.id == conversation.assigned_to_user_id).first()
+        if user and user.name:
+            first_name = user.name.strip().split(" ")[0]
+            dept = conversation.assigned_department
+            if dept:
+                signature = f"*{first_name} · {dept.replace('_', ' ').title()}*"
+            else:
+                signature = f"*{first_name}*"
+
+    signed_caption = f"{signature}\n{caption}".strip() if caption else signature
     await whatsapp_service.send_media_message(
         to=conversation.channel_identifier,
         media_url=media_url,
         media_type=media_type,
         mime_type=mime_type,
         filename=file.filename or "",
-        caption=caption,
+        caption=signed_caption,
     )
 
     # 8. Detectar MessageType — usa IMAGE/VIDEO/AUDIO/DOCUMENT si el enum los tiene, sino SYSTEM
@@ -166,7 +179,7 @@ async def send_media(
         direction=MessageDirection.OUTBOUND,
         sender_type=MessageSenderType.HUMAN,
         message_type=mtype,
-        content=caption or file.filename,
+        content=signed_caption or file.filename,
         media_url=media_url,
         media_mime_type=mime_type,
         media_filename=file.filename,
