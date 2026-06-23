@@ -63,6 +63,7 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
   const [loadingOpps, setLoadingOpps] = useState(false);
   const [oppsError, setOppsError] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedOpp, setSelectedOpp] = useState(null);
 
   // Tasks States
   const [tasks, setTasks] = useState([]);
@@ -168,6 +169,7 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
   useEffect(() => {
     setNotes(contact?.notes || '');
     setShowAddForm(false);
+    setSelectedOpp(null);
     setActiveTab('resumen');
     setActiveStagePickerOppId(null);
     setShowTagDropdown(false);
@@ -656,6 +658,24 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
                 onSave={handleAddOpportunitySave}
                 onCancel={() => setShowAddForm(false)}
               />
+            ) : selectedOpp ? (
+              <div className="space-y-2 animate-fadeIn">
+                <button
+                  onClick={() => setSelectedOpp(null)}
+                  className="text-xs text-primary font-semibold flex items-center gap-1 mb-2 hover:underline"
+                >
+                  ← Volver a oportunidades
+                </button>
+                <OpportunityForm
+                  contactId={contact.id}
+                  opportunity={selectedOpp}
+                  onSave={(updated) => {
+                    setSelectedOpp(updated);
+                    loadOpportunities(contact.id);
+                  }}
+                  onCancel={() => setSelectedOpp(null)}
+                />
+              </div>
             ) : (
               <div className="space-y-2.5">
                 <OpportunityList
@@ -666,6 +686,7 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
                   onDeleteClick={handleOpportunityDelete}
                   onStageChangeClick={(opp) => setActiveStagePickerOppId(opp.id)}
                   isCompact={true}
+                  onSelectOpportunity={(opp) => setSelectedOpp(opp)}
                 />
 
                 {/* Inline Stage Picker Dropdown */}
@@ -910,6 +931,10 @@ export default function ContactDetail({ contact, onUpdate, onEdit }) {
               }}
               onDeleteClick={handleOpportunityDelete}
               onStageChangeClick={(opp) => setActiveStagePickerOppId(opp.id)}
+              onSelectOpportunity={(opp) => {
+                setShowAllOpps(false);
+                setSelectedOpp(opp);
+              }}
             />
 
             {/* Stage Picker Dropdown in Modal */}

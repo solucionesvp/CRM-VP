@@ -15,6 +15,7 @@ export default function OpportunityList({
   onDeleteClick,
   onStageChangeClick,
   isCompact = false,
+  onSelectOpportunity = null,
 }) {
   if (loading) {
     return (
@@ -75,7 +76,10 @@ export default function OpportunityList({
               return (
                 <div
                   key={opp.id}
-                  className="bg-white border border-border rounded-lg p-2.5 shadow-sm hover:shadow transition-shadow relative overflow-hidden text-xs"
+                  onClick={() => onSelectOpportunity?.(opp)}
+                  className={`bg-white border border-border rounded-lg p-2.5 shadow-sm hover:shadow transition-shadow relative overflow-hidden text-xs ${
+                    onSelectOpportunity ? 'cursor-pointer' : ''
+                  }`}
                 >
                   {/* Colored top-line representing stage */}
                   <div
@@ -113,7 +117,7 @@ export default function OpportunityList({
                         {opp.pipeline?.name || 'Venta'}
                       </span>
                       <button
-                        onClick={() => onStageChangeClick(opp)}
+                        onClick={(e) => { e.stopPropagation(); onStageChangeClick(opp); }}
                         className="font-bold px-1.5 py-0.5 rounded border flex items-center gap-1 transition-colors hover:bg-gray-50"
                         style={{
                           borderColor: `${stageColor}30`,
@@ -136,7 +140,7 @@ export default function OpportunityList({
                     </div>
 
                     <button
-                      onClick={() => onDeleteClick(opp.id)}
+                      onClick={(e) => { e.stopPropagation(); onDeleteClick(opp.id); }}
                       className="text-textMuted hover:text-red-600 p-0.5 rounded hover:bg-red-50 transition-colors"
                       title="Eliminar oportunidad"
                     >
@@ -150,7 +154,10 @@ export default function OpportunityList({
             return (
               <div
                 key={opp.id}
-                className="bg-white border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+                onClick={() => onSelectOpportunity?.(opp)}
+                className={`bg-white border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden ${
+                  onSelectOpportunity ? 'cursor-pointer' : ''
+                }`}
               >
                 {/* Colored top-line representing stage */}
                 <div
@@ -168,7 +175,7 @@ export default function OpportunityList({
 
                   {/* Delete button */}
                   <button
-                    onClick={() => onDeleteClick(opp.id)}
+                    onClick={(e) => { e.stopPropagation(); onDeleteClick(opp.id); }}
                     className="text-textMuted hover:text-red-600 p-1 rounded hover:bg-red-50 transition-colors"
                     title="Eliminar oportunidad"
                   >
@@ -206,7 +213,7 @@ export default function OpportunityList({
                   <div className="flex gap-1.5 items-center">
                     {/* Stage Select / Stage Badge */}
                     <button
-                      onClick={() => onStageChangeClick(opp)}
+                      onClick={(e) => { e.stopPropagation(); onStageChangeClick(opp); }}
                       className="text-[11px] font-bold px-2 py-0.5 rounded border transition-colors flex items-center gap-1"
                       style={{
                         borderColor: `${stageColor}30`,
