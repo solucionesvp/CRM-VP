@@ -7,7 +7,7 @@ const PRIORITY_LABELS = {
   high: { label: 'Alta', color: 'bg-red-50 text-red-700 border-red-200' },
 };
 
-export default function KanbanCard({ opportunity, contactName, onDragStart }) {
+export default function KanbanCard({ opportunity, contactName, onDragStart, onSelectOpportunity }) {
   const priorityInfo = PRIORITY_LABELS[opportunity.priority] || PRIORITY_LABELS.medium;
 
   const handleDragStart = (e) => {
@@ -22,7 +22,8 @@ export default function KanbanCard({ opportunity, contactName, onDragStart }) {
     <div
       draggable
       onDragStart={handleDragStart}
-      className="bg-white border border-border rounded-lg p-3.5 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all duration-150 relative overflow-hidden select-none"
+      onClick={() => onSelectOpportunity?.(opportunity)}
+      className="bg-white border border-border rounded-lg p-3.5 shadow-sm hover:shadow-md cursor-pointer hover:border-primary/40 active:cursor-grabbing transition-all duration-150 relative overflow-hidden select-none"
     >
       {/* Priority Indicator Dot on Top Right */}
       <div className="absolute top-2 right-2.5">

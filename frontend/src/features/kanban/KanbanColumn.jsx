@@ -7,6 +7,7 @@ export default function KanbanColumn({
   contactMap,
   onOpportunityMove,
   onDragStartCard,
+  onSelectOpportunity,
 }) {
   const [isOver, setIsOver] = useState(false);
 
@@ -93,6 +94,7 @@ export default function KanbanColumn({
               opportunity={opp}
               contactName={contactMap[opp.contact_id]}
               onDragStart={onDragStartCard}
+              onSelectOpportunity={onSelectOpportunity}
             />
           ))
         )}

@@ -24,6 +24,7 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
 
   // Form states
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedOpp, setSelectedOpp] = useState(null);
 
   // Loading/Error states
   const [loading, setLoading] = useState(true);
@@ -226,7 +227,12 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
                   return (
                     <tr key={opp.id} className="hover:bg-primary/[0.02] transition-colors">
                       <td className="px-6 py-4">
-                        <div className="font-bold text-text">{opp.title}</div>
+                        <button
+                          onClick={() => setSelectedOpp(opp)}
+                          className="font-bold text-text hover:text-primary transition-colors text-left"
+                        >
+                          {opp.title}
+                        </button>
                         <div className="text-xs text-textMuted font-medium">
                           {opp.product_service ? `${opp.product_service.name} ${opp.product_service.sku ? `(${opp.product_service.sku})` : ''}` : opp.product_interest}
                         </div>
@@ -310,6 +316,22 @@ export default function OpportunityGlobalList({ onNavigateToContact }) {
                 loadOpportunities();
               }}
               onCancel={() => setShowAddForm(false)}
+            />
+          </div>
+        </div>
+      )}
+
+      {selectedOpp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full max-h-[95vh] overflow-y-auto shadow-xl">
+            <OpportunityForm
+              contactId={selectedOpp.contact_id}
+              opportunity={selectedOpp}
+              onSave={(updated) => {
+                setSelectedOpp(updated);
+                loadOpportunities();
+              }}
+              onCancel={() => setSelectedOpp(null)}
             />
           </div>
         </div>
