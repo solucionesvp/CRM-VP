@@ -74,7 +74,7 @@ async def download_and_store_media(
                 },
                 headers={"apikey": settings.EVOLUTION_API_KEY},
             )
-            if resp.status_code != 200:
+            if resp.status_code not in (200, 201):
                 logger.warning(
                     f"media_service: Evolution getBase64 falló — "
                     f"status={resp.status_code} msg_id={message_id}"
