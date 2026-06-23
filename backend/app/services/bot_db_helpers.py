@@ -71,8 +71,14 @@ def find_or_create_conversation(db: Session, contact: Contact, phone: str) -> Co
 def save_message(
     db: Session, conversation: Conversation,
     external_id: str, content: str, msg_type: str, raw: dict,
+    media_data: dict = None,
 ) -> Message:
-    """Persiste el mensaje entrante y actualiza el preview de la conversación."""
+    """Persiste el mensaje entrante y actualiza el preview de la conversación.
+
+    Args:
+        media_data: dict opcional con claves media_url, media_mime_type,
+                    media_filename, media_size_bytes — proveniente de media_service.
+    """
     mtype = MessageType.TEXT if msg_type == "text" else MessageType.SYSTEM
     msg = Message(
         conversation_id=conversation.id,
@@ -84,12 +90,18 @@ def save_message(
         raw_payload=raw,
         status=MessageStatus.DELIVERED,
     )
+    if media_data:
+        msg.media_url       = media_data.get("media_url")
+        msg.media_mime_type = media_data.get("media_mime_type")
+        msg.media_filename  = media_data.get("media_filename")
+        msg.media_size_bytes = media_data.get("media_size_bytes")
     db.add(msg)
     conversation.last_message_preview = (content or "")[:100]
     from datetime import datetime
     conversation.last_message_at = datetime.utcnow()
     db.commit()
     return msg
+
 
 
 def get_or_create_context(db: Session, conversation: Conversation) -> ConversationContext:

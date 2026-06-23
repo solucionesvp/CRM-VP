@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     # Bot — ventana de espera para mensajes fragmentados (debounce)
     BOT_DEBOUNCE_SECONDS: float = 8.0    # segundos de silencio antes de procesar
 
+    # Cloudflare R2 — almacenamiento de media (S3-compatible)
+    R2_ACCOUNT_ID:        str = ""
+    R2_ACCESS_KEY_ID:     str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_BUCKET_NAME:       str = "crm-vp-files"
+    R2_PUBLIC_URL:        str = ""        # ej: https://pub-xxxx.r2.dev o dominio custom
+
     @model_validator(mode="after")
     def assemble_db_connection(self) -> "Settings":
         if not self.DATABASE_URL:

@@ -37,6 +37,10 @@ class MessageResponse(BaseModel):
     external_id: Optional[str] = None
     status: str
     created_at: datetime
+    # Media — poblados cuando el mensaje tiene archivo subido a R2
+    media_url:       Optional[str] = None
+    media_mime_type: Optional[str] = None
+    media_filename:  Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
 

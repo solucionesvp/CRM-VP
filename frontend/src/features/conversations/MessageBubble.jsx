@@ -65,43 +65,74 @@ export default function MessageBubble({ message }) {
         </div>
         <div className={`px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${bubbleClass}`}>
           {(() => {
-            const type = message.message_type?.toLowerCase();
-            const content = message.content || '';
-            
-            // Medios reales por message_type
-            if (type === 'image') return (
-              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
-                📷 Imagen recibida por WhatsApp
-              </span>
-            );
-            if (type === 'audio') return (
-              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
-                🎤 Audio recibido por WhatsApp
-              </span>
-            );
-            if (type === 'video') return (
-              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
-                🎥 Video recibido por WhatsApp
-              </span>
-            );
-            if (type === 'document') return (
-              <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
-                📄 Documento recibido por WhatsApp
-              </span>
-            );
-            
-            // Medios guardados como system con content=[media]
+            const type     = message.message_type?.toLowerCase();
+            const content  = message.content || '';
+            const mediaUrl = message.media_url;
+            const filename = message.media_filename || 'archivo';
+
+            // ── Imagen ─────────────────────────────────────────────────────────
+            if (type === 'image' || (type === 'system' && mediaUrl && message.media_mime_type?.startsWith('image/'))) {
+              if (mediaUrl) return (
+                <a href={mediaUrl} target="_blank" rel="noopener noreferrer">
+                  <img
+                    src={mediaUrl}
+                    alt={filename}
+                    className="max-w-[240px] max-h-[200px] rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </a>
+              );
+              return <span className="flex items-center gap-1.5 text-xs italic text-gray-400">📷 Imagen</span>;
+            }
+
+            // ── Audio ──────────────────────────────────────────────────────────
+            if (type === 'audio' || (type === 'system' && mediaUrl && message.media_mime_type?.startsWith('audio/'))) {
+              if (mediaUrl) return (
+                <audio controls className="max-w-[240px] h-8" src={mediaUrl}>
+                  Tu navegador no soporta audio.
+                </audio>
+              );
+              return <span className="flex items-center gap-1.5 text-xs italic text-gray-400">🎤 Audio</span>;
+            }
+
+            // ── Video ──────────────────────────────────────────────────────────
+            if (type === 'video' || (type === 'system' && mediaUrl && message.media_mime_type?.startsWith('video/'))) {
+              if (mediaUrl) return (
+                <video controls className="max-w-[240px] rounded-lg" src={mediaUrl}>
+                  Tu navegador no soporta video.
+                </video>
+              );
+              return <span className="flex items-center gap-1.5 text-xs italic text-gray-400">🎥 Video</span>;
+            }
+
+            // ── Documento / PDF ────────────────────────────────────────────────
+            if (type === 'document' || (type === 'system' && mediaUrl)) {
+              if (mediaUrl) return (
+                <a
+                  href={mediaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs font-semibold underline hover:opacity-80"
+                >
+                  📄 {filename}
+                </a>
+              );
+              return <span className="flex items-center gap-1.5 text-xs italic text-gray-400">📄 Documento</span>;
+            }
+
+            // ── System sin media_url ───────────────────────────────────────────
             if (type === 'system' && content === '[media]') return (
               <span className="flex items-center gap-1.5 text-xs italic text-gray-400">
-                📎 Archivo multimedia (foto, audio o video)
+                📎 Archivo multimedia
               </span>
             );
-            
-            // Texto normal
+
+            // ── Texto normal ───────────────────────────────────────────────────
             return content || (
               <span className="italic text-gray-400 text-xs">Mensaje vacío</span>
             );
           })()}
+
         </div>
         <span className={`text-[10px] text-gray-400 ${isInbound ? 'text-left' : 'text-right'} mt-0.5`}>
           {formatTime(message.created_at)}

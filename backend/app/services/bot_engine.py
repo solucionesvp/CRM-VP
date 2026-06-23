@@ -74,7 +74,20 @@ async def process_evolution_message(payload: dict, db: Session):
             return
         if message_id and db.query(Message).filter(Message.external_id == message_id).first():
             return
-        await _save_and_schedule(db, phone, push_name, message_id, content, msg_type, data)
+
+        # Descargar media a R2 ANTES de persistir (falla silenciosa → dict vacío)
+        media_data: dict = {}
+        if msg_type not in ("text", "location") and message_id:
+            from app.services import media_service
+            media_data = await media_service.download_and_store_media(
+                message_id=message_id,
+                media_type=msg_type,
+                conversation_id=phone,   # se usa como prefijo de carpeta en R2
+                mime_type="",
+                filename="",
+            )
+
+        await _save_and_schedule(db, phone, push_name, message_id, content, msg_type, data, media_data)
     except Exception as e:
         logger.error(f"Error Evolution: {e}", exc_info=True)
 
@@ -103,11 +116,12 @@ async def process_message(message: dict, db: Session):
 async def _save_and_schedule(
     db: Session, phone: str, push_name: str,
     message_id: str, content: str, msg_type: str, raw: dict,
+    media_data: dict = None,
 ) -> None:
     """Persiste el mensaje y (re)programa el timer de debounce."""
     contact, _   = db_h.find_or_create_contact(db, phone, push_name)
     conversation = db_h.find_or_create_conversation(db, contact, phone)
-    db_h.save_message(db, conversation, message_id, content, msg_type, raw)
+    db_h.save_message(db, conversation, message_id, content, msg_type, raw, media_data or {})
     context      = db_h.get_or_create_context(db, conversation)
 
     if not conversation.bot_active or context.handoff_to_human:
