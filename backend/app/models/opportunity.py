@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.models.pipeline import Pipeline
     from app.models.product_service import ProductService
     from app.models.conversation import Conversation
+    from app.models.opportunity_attachment import OpportunityAttachment
 
 class Opportunity(Base):
     __tablename__ = "opportunities"
@@ -68,3 +69,4 @@ class Opportunity(Base):
     notes           = relationship("OpportunityNote",     back_populates="opportunity", cascade="all, delete-orphan")
     activities      = relationship("OpportunityActivity", back_populates="opportunity", cascade="all, delete-orphan")
     conversations   = relationship("Conversation",        back_populates="opportunity")
+    attachments     = relationship("OpportunityAttachment", back_populates="opportunity", cascade="all, delete-orphan")

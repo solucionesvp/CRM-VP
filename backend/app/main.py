@@ -89,6 +89,9 @@ app.include_router(tags_router.router, prefix="/api/v1")
 from app.api.v1 import whatsapp as whatsapp_router
 app.include_router(whatsapp_router.router, prefix="/api/v1")
 
+from app.api.v1 import opportunity_attachments as opp_attachments_router
+app.include_router(opp_attachments_router.router, prefix="/api/v1")
+
 
 @app.get("/")
 def root():

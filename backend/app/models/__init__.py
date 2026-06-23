@@ -19,6 +19,7 @@ from app.models.department import Department
 # DepartmentAgent debe importarse después de Department y User
 from app.models.department_agent import DepartmentAgent
 from app.models.tag import Tag, ContactTag
+from app.models.opportunity_attachment import OpportunityAttachment
 
 __all__ = [
     "User",
@@ -40,4 +41,5 @@ __all__ = [
     "DepartmentAgent",
     "Tag",
     "ContactTag",
+    "OpportunityAttachment",
 ]
