@@ -410,3 +410,30 @@ export async function removeContactTag(contactId, tagId) {
 }
 
 
+// --- Opportunity Attachments API ---
+export async function fetchOpportunityAttachments(oppId) {
+  const response = await fetch(`${API_BASE_URL}/opportunities/${oppId}/attachments`);
+  return handleResponse(response, 'Error al obtener adjuntos');
+}
+
+export async function uploadOpportunityAttachment(oppId, file, description = '') {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (description) formData.append('description', description);
+  const response = await fetch(
+    `${API_BASE_URL}/opportunities/${oppId}/attachments`,
+    { method: 'POST', body: formData }
+  );
+  return handleResponse(response, 'Error al subir adjunto');
+}
+
+export async function deleteOpportunityAttachment(oppId, attachmentId) {
+  const response = await fetch(
+    `${API_BASE_URL}/opportunities/${oppId}/attachments/${attachmentId}`,
+    { method: 'DELETE' }
+  );
+  return handleResponse(response, 'Error al eliminar adjunto');
+}
+
+
+

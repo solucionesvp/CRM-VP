@@ -2,6 +2,7 @@ import React from 'react';
 import { Calendar, TrendingUp, Edit, Trash2 } from 'lucide-react';
 import OpportunityActivityFeed from './OpportunityActivityFeed';
 import OpportunityTasks from './OpportunityTasks';
+import OpportunityAttachments from './OpportunityAttachments';
 
 const PRIORITY_LABELS = {
   low: { label: 'Baja', color: 'bg-blue-50 text-blue-700 border-blue-200' },
@@ -157,6 +158,11 @@ export default function OpportunityDetail({ opportunity, onEdit, onDelete }) {
           Historial de Actividad
         </h4>
         <OpportunityActivityFeed opportunityId={opportunity.id} />
+      </div>
+
+      {/* Adjuntos */}
+      <div className="border-t border-border pt-3 mt-3">
+        <OpportunityAttachments opportunityId={opportunity.id} />
       </div>
 
       {/* Seguimientos */}
