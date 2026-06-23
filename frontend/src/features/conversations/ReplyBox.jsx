@@ -1,10 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, BotOff } from 'lucide-react';
+import { Send, Bot, BotOff, Paperclip, X } from 'lucide-react';
+import { sendConversationMedia } from '../../lib/api';
 
 export default function ReplyBox({ conversation, onSend, onToggleBot }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [attachedFile, setAttachedFile] = useState(null);
+  const [attachPreview, setAttachPreview] = useState(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
   const botActive = conversation?.bot_active;
 
   useEffect(() => {
@@ -14,13 +18,34 @@ export default function ReplyBox({ conversation, onSend, onToggleBot }) {
     }
   }, [text]);
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAttachedFile(file);
+    if (file.type.startsWith('image/')) {
+      setAttachPreview(URL.createObjectURL(file));
+    } else {
+      setAttachPreview(null);
+    }
+    // Reset input so same file can be reselected
+    e.target.value = '';
+  };
+
   const handleSend = async () => {
-    const trimmed = text.trim();
-    if (!trimmed || sending) return;
+    if (sending) return;
     setSending(true);
     try {
-      await onSend(trimmed);
-      setText('');
+      if (attachedFile) {
+        await sendConversationMedia(conversation.id, attachedFile, text.trim());
+        setAttachedFile(null);
+        setAttachPreview(null);
+        setText('');
+      } else {
+        const trimmed = text.trim();
+        if (!trimmed) return;
+        await onSend(trimmed);
+        setText('');
+      }
     } finally {
       setSending(false);
     }
@@ -35,6 +60,15 @@ export default function ReplyBox({ conversation, onSend, onToggleBot }) {
 
   return (
     <div className="border-t border-gray-200 bg-white">
+      {/* Input file oculto */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx"
+        onChange={handleFileSelect}
+      />
+
       {botActive && (
         <div className="flex items-center justify-between bg-orange-50 border-b border-orange-100 px-4 py-2.5">
           <div className="flex items-center gap-2 text-[#e05a1a] text-xs font-semibold">
@@ -48,7 +82,37 @@ export default function ReplyBox({ conversation, onSend, onToggleBot }) {
           </button>
         </div>
       )}
+
+      {/* Preview del archivo seleccionado */}
+      {attachedFile && (
+        <div className="mx-3 mb-2 p-2 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-2">
+          {attachPreview ? (
+            <img src={attachPreview} alt="preview" className="w-10 h-10 object-cover rounded" />
+          ) : (
+            <span className="text-lg">📄</span>
+          )}
+          <span className="text-xs text-gray-600 truncate flex-1">{attachedFile.name}</span>
+          <button
+            onClick={() => { setAttachedFile(null); setAttachPreview(null); }}
+            className="text-gray-400 hover:text-red-500 transition-colors"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-end gap-3 p-3">
+        {/* Botón clip — adjuntar archivo */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={botActive}
+          title="Adjuntar archivo"
+          className="flex-shrink-0 p-2 rounded-lg bg-gray-100 text-gray-400 hover:bg-gray-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <Paperclip className="w-4 h-4" />
+        </button>
+
+        {/* Botón bot */}
         <button
           onClick={onToggleBot}
           title={botActive ? 'Desactivar bot' : 'Activar bot'}
@@ -81,7 +145,7 @@ export default function ReplyBox({ conversation, onSend, onToggleBot }) {
 
         <button
           onClick={handleSend}
-          disabled={!text.trim() || botActive || sending}
+          disabled={(!text.trim() && !attachedFile) || botActive || sending}
           className="flex-shrink-0 p-2.5 bg-[#FC6621] text-white rounded-xl hover:bg-[#e05a1a] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           <Send className="w-4 h-4" />

@@ -107,3 +107,55 @@ async def request_pairing_code(phone_number: str) -> str:
         if not code:
             raise Exception("No se encontró el código de vinculación en la respuesta")
         return code
+
+
+async def send_media_message(
+    to: str,
+    media_url: str,
+    media_type: str,
+    mime_type: str = "",
+    filename: str = "",
+    caption: str = "",
+) -> dict:
+    """
+    Envía archivo multimedia via Evolution API usando URL pública (R2).
+
+    Args:
+        to:         número de teléfono destino.
+        media_url:  URL pública del archivo (ej: R2 public URL).
+        media_type: "image" | "video" | "document" | "audio".
+        mime_type:  MIME type del archivo, ej "image/jpeg".
+        filename:   nombre de archivo (para documentos).
+        caption:    texto de caption opcional.
+
+    Returns:
+        Response JSON de Evolution API.
+    """
+    from app.core.config import settings
+
+    # Audio de voz → endpoint especial para que se muestre como nota de voz en WhatsApp
+    if media_type == "audio":
+        url = f"{settings.EVOLUTION_API_URL}/message/sendWhatsAppAudio/{settings.EVOLUTION_INSTANCE}"
+        payload = {
+            "number": to,
+            "audio": media_url,
+            "encoding": True,
+        }
+    else:
+        url = f"{settings.EVOLUTION_API_URL}/message/sendMedia/{settings.EVOLUTION_INSTANCE}"
+        payload = {
+            "number": to,
+            "mediatype": media_type,
+            "mimetype": mime_type,
+            "caption": caption,
+            "media": media_url,
+            "fileName": filename or f"archivo.{mime_type.split('/')[-1]}",
+        }
+
+    headers = {
+        "apikey": settings.EVOLUTION_API_KEY,
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient(timeout=60) as client:
+        response = await client.post(url, json=payload, headers=headers)
+        return response.json()

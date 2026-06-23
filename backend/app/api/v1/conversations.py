@@ -1,15 +1,18 @@
 from typing import List, Optional
-from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from uuid import UUID, uuid4
+from datetime import datetime
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.models.message import Message
+from app.models.enums import MessageDirection, MessageSenderType, MessageType, MessageStatus
 from app.schemas.conversation import (
     ConversationListItem, ConversationDetail, ConversationUpdate,
     ConversationAssign, MessageResponse, SendMessageRequest,
     CreateOpportunityRequest,
 )
-from app.services import conversation_service
+from app.services import conversation_service, storage_service, whatsapp_service
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -86,6 +89,98 @@ async def send_message(conv_id: UUID, body: SendMessageRequest, db: Session = De
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     return msg
+
+
+@router.post("/{conv_id}/messages/media", response_model=MessageResponse, status_code=status.HTTP_201_CREATED)
+async def send_media(
+    conv_id: UUID,
+    file: UploadFile = File(...),
+    caption: str = "",
+    db: Session = Depends(get_db),
+):
+    """
+    Sube un archivo a R2 y lo envía como mensaje multimedia de WhatsApp.
+    Acepta multipart/form-data con campos: file (requerido), caption (opcional).
+    """
+    from app.models.conversation import Conversation
+
+    # 1. Cargar conversación
+    conversation = db.query(Conversation).filter(Conversation.id == conv_id).first()
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversación no encontrada")
+
+    # 2. Leer bytes
+    content = await file.read()
+
+    # 3. Detectar MIME
+    mime_type = file.content_type or "application/octet-stream"
+
+    # 4. Detectar media_type
+    if mime_type.startswith("image/"):
+        media_type = "image"
+    elif mime_type.startswith("video/"):
+        media_type = "video"
+    elif mime_type.startswith("audio/"):
+        media_type = "audio"
+    elif mime_type in (
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/msword",
+        "application/vnd.ms-excel",
+    ) or mime_type.startswith("application/vnd."):
+        media_type = "document"
+    else:
+        media_type = "document"
+
+    # 5. Construir key R2
+    prefix = uuid4().hex[:8]
+    key = f"outbound/{conv_id}/{prefix}_{file.filename}"
+
+    # 6. Subir a R2
+    media_url = await storage_service.upload_file(content, key, mime_type)
+    if not media_url:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo subir el archivo — R2 no configurado o error de conexión",
+        )
+
+    # 7. Enviar por WhatsApp
+    await whatsapp_service.send_media_message(
+        to=conversation.channel_identifier,
+        media_url=media_url,
+        media_type=media_type,
+        mime_type=mime_type,
+        filename=file.filename or "",
+        caption=caption,
+    )
+
+    # 8. Detectar MessageType — usa IMAGE/VIDEO/AUDIO/DOCUMENT si el enum los tiene, sino SYSTEM
+    try:
+        mtype = MessageType[media_type.upper()]
+    except KeyError:
+        mtype = MessageType.SYSTEM
+
+    msg = Message(
+        conversation_id=conv_id,
+        direction=MessageDirection.OUTBOUND,
+        sender_type=MessageSenderType.HUMAN,
+        message_type=mtype,
+        content=caption or file.filename,
+        media_url=media_url,
+        media_mime_type=mime_type,
+        media_filename=file.filename,
+        media_size_bytes=len(content),
+        status=MessageStatus.SENT,
+    )
+    db.add(msg)
+    conversation.last_message_preview = f"📎 {file.filename}"
+    conversation.last_message_at = datetime.utcnow()
+    db.commit()
+    db.refresh(msg)
+
+    # 9. Retornar
+    return MessageResponse.model_validate(msg)
 
 
 @router.patch("/{conv_id}", response_model=ConversationDetail)

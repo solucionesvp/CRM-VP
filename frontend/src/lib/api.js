@@ -274,6 +274,17 @@ export async function sendConversationMessage(id, text) {
   return handleResponse(response, 'Error al enviar mensaje');
 }
 
+export async function sendConversationMedia(convId, file, caption = '') {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (caption) formData.append('caption', caption);
+  const response = await fetch(
+    `${API_BASE_URL}/conversations/${convId}/messages/media`,
+    { method: 'POST', body: formData },
+  );
+  return handleResponse(response, 'Error al enviar archivo');
+}
+
 export async function updateConversation(id, data) {
   const response = await fetch(`${API_BASE_URL}/conversations/${id}`, {
     method: 'PATCH',
